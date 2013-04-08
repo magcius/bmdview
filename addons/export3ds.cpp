@@ -8,12 +8,8 @@
 #include <algorithm>
 #include <cassert>
 
-#include "lib3ds/file.h"
-#include "lib3ds/mesh.h"
-#include "lib3ds/node.h"
-#include "lib3ds/material.h"
-#include "lib3ds/matrix.h"
-#include "lib3ds/vector.h"
+#include <unistd.h>
+#include <lib3ds.h>
 
 #include "../common.h"
 #include "exportTexture.h"
@@ -113,9 +109,8 @@ int countTriangles(const Batch& b)
 
 //it's better if one batch is one mesh, this makes hierarchy
 //handling easier
-Lib3dsMesh* batchToMesh(const Batch& b,
-                         const BModel& bmd, const std::string& name,
-                         const std::string& matName, const Material* currMat)
+Lib3dsMesh* batchToMesh(const Batch& b, const BModel& bmd, const std::string& name,
+                        int matIndex)
 {
   const Vtx1& vtx = bmd.vtx1;
   const Attributes& attribs = b.attribs;
@@ -171,18 +166,16 @@ Lib3dsMesh* batchToMesh(const Batch& b,
   Lib3dsMesh* mesh = lib3ds_mesh_new(name.c_str());
 
   //vertices and texcoords
-  lib3ds_mesh_new_point_list(mesh, pairMap.size());
-  if(attribs.hasTexCoords[0])
-    lib3ds_mesh_new_texel_list(mesh, pairMap.size());
+  lib3ds_mesh_resize_vertices(mesh, pairMap.size(), 1, 0);
 
   PairMap::iterator it, end = pairMap.end();
   for(i = 0, it = pairMap.begin(); it != end; ++it, ++i)
   {
     Vert curr = it->first;
 
-    mesh->pointL[i].pos[0] = vtx.positions[curr.posIndex].x();
-    mesh->pointL[i].pos[1] = vtx.positions[curr.posIndex].y();
-    mesh->pointL[i].pos[2] = vtx.positions[curr.posIndex].z();
+    mesh->vertices[i][0] = vtx.positions[curr.posIndex].x();
+    mesh->vertices[i][1] = vtx.positions[curr.posIndex].y();
+    mesh->vertices[i][2] = vtx.positions[curr.posIndex].z();
 
     if(attribs.hasTexCoords[0])
     {
@@ -194,7 +187,8 @@ Lib3dsMesh* batchToMesh(const Batch& b,
       //we have to scale tex coords by .5f, though.
       bool mirrorS = false, mirrorT = false;
 
-      u16 stage = currMat->texStages[0];
+      const Material *mat = &bmd.mat3.materials[matIndex];
+      u16 stage = mat->texStages[0];
       if(stage != 0xffff)
       {
         u16 v2 = bmd.mat3.texStageIndexToTextureIndex[stage];
@@ -210,8 +204,8 @@ Lib3dsMesh* batchToMesh(const Batch& b,
         v *= .5f;
 
       //store v flipped - 3ds max has v texcoord axis inverted
-      mesh->texelL[i][0] = u;
-      mesh->texelL[i][1] = 1.f - v;
+      mesh->texcos[i][0] = u;
+      mesh->texcos[i][1] = 1.f - v;
     }
 
     it->second = i;
@@ -253,20 +247,20 @@ Lib3dsMesh* batchToMesh(const Batch& b,
         //so swap y and z, change sign of y
         int index = getIndex(curr.points[j], attribs, pairMap);
 
-        Vector3f v(mesh->pointL[index].pos[0],
-                   mesh->pointL[index].pos[1],
-                   mesh->pointL[index].pos[2]);
+        Vector3f v(mesh->vertices[index][0],
+                   mesh->vertices[index][1],
+                   mesh->vertices[index][2]);
         v = mat*v;
-        mesh->pointL[index].pos[0] = v.x();
-        mesh->pointL[index].pos[1] = -v.z();
-        mesh->pointL[index].pos[2] = v.y();
+        mesh->vertices[index][0] = v.x();
+        mesh->vertices[index][1] = -v.z();
+        mesh->vertices[index][2] = v.y();
       }
     }
   }
 
 
   //tris
-  lib3ds_mesh_new_face_list(mesh, triCount);
+  lib3ds_mesh_resize_faces(mesh, triCount);
   int triIndex = 0;
   for(j = 0; j < b.packets.size(); ++j)
   {
@@ -288,15 +282,16 @@ Lib3dsMesh* batchToMesh(const Batch& b,
       {
         int c = k;
 
-        mesh->faceL[triIndex].flags = 0x7; //set all edges visibility to true
+        //set all edges visibility to true
+        mesh->faces[triIndex].flags = LIB3DS_FACE_VIS_AC | LIB3DS_FACE_VIS_BC | LIB3DS_FACE_VIS_AB;
 
         //get "unified" index
         int ia, ib, ic;
-        ia = mesh->faceL[triIndex].points[0] =
+        ia = mesh->faces[triIndex].index[0] =
           getIndex(curr.points[a], attribs, pairMap);
-        ib = mesh->faceL[triIndex].points[1] =
+        ib = mesh->faces[triIndex].index[1] =
           getIndex(curr.points[b], attribs, pairMap);
-        ic = mesh->faceL[triIndex].points[2] =
+        ic = mesh->faces[triIndex].index[2] =
           getIndex(curr.points[c], attribs, pairMap);
 
         //if at least one vertex of the current triangle has more than
@@ -311,16 +306,16 @@ Lib3dsMesh* batchToMesh(const Batch& b,
         if(attribs.hasNormals
           && !(normalMapSet[ia].size() > 1 || normalMapSet[ib].size() > 1
                || normalMapSet[ic].size() > 1))
-          mesh->faceL[triIndex].smoothing = 1;
+          mesh->faces[triIndex].smoothing_group = 1; // XXX -- bad?
         //*/
 
         //set material name
         if(attribs.hasTexCoords[0])
-          strcpy(mesh->faceL[triIndex].material, matName.c_str());
+          mesh->faces[triIndex].material = matIndex;
 
         if(flip)
-          std::swap(mesh->faceL[triIndex].points[2],
-                    mesh->faceL[triIndex].points[0]);
+          std::swap(mesh->faces[triIndex].index[2],
+                    mesh->faces[triIndex].index[0]);
 
         ++triIndex;
 
@@ -346,9 +341,7 @@ Lib3dsMaterial* materialToMaterial(const BModel& bmd, const Material& mat,
                                    const std::vector<std::string>& texNames,
                                    const std::string& name)
 {
-  Lib3dsMaterial* mat3ds = lib3ds_material_new();
-
-  strcpy(mat3ds->name, name.c_str());
+  Lib3dsMaterial* mat3ds = lib3ds_material_new(name.c_str());
 
   u16 stage = mat.texStages[0];
   if(stage != 0xffff)
@@ -362,7 +355,7 @@ Lib3dsMaterial* materialToMaterial(const BModel& bmd, const Material& mat,
     {
       case 0: //clamp
         //16: clamp texture outside of [0, 1]x[0, 1]
-        mat3ds->texture1_map.flags = 17; //clamp textures
+        mat3ds->texture1_map.flags = LIB3DS_TEXTURE_DECALE | LIB3DS_TEXTURE_NO_TILE;
         break;
       case 1: //tile
         mat3ds->texture1_map.flags = 0; //tile textures
@@ -380,7 +373,7 @@ Lib3dsMaterial* materialToMaterial(const BModel& bmd, const Material& mat,
 
     mat3ds->opacity_map = mat3ds->texture1_map;
     if(ih.data->format != 1)
-      mat3ds->opacity_map.flags |= 0x40; //use alpha
+      mat3ds->opacity_map.flags |= LIB3DS_TEXTURE_ALPHA_SOURCE;
   }
 
   if(mat.cullIndex != 0xff)
@@ -395,9 +388,8 @@ Lib3dsMesh* dummyMesh(const std::string& name)
   return ret;
 }
 
-void traverseSceneGraph(Lib3dsFile* file, const BModel& bmd,
-                        const SceneGraph& sg, int parent, int& nextId,
-                        std::string currMatName, const Material* currMat,
+void traverseSceneGraph(Lib3dsFile* file, const BModel& bmd, const SceneGraph& sg,
+                        Lib3dsNode *parent, int currMatIndex,
                         Matrix44f currMatrix = Matrix44f::IDENTITY)
 {
   switch(sg.type)
@@ -431,19 +423,14 @@ void traverseSceneGraph(Lib3dsFile* file, const BModel& bmd,
     }break;
     case 0x11: //material
     {
-      std::ostringstream str;
-      str << 'm' << bmd.mat3.indexToMatIndex[sg.index];
-      currMatName = str.str();
-      currMat = &bmd.mat3.materials[bmd.mat3.indexToMatIndex[sg.index]];
+      currMatIndex = bmd.mat3.indexToMatIndex[sg.index];
     }break;
     case 0x12: //batch
       const Batch& currBatch = bmd.shp1.batches[sg.index];
+      char buf[8] = { 0 };
+      snprintf(buf, sizeof(buf)-1, "n%d", sg.index);
 
-      std::ostringstream name;
-      name << "n" << nextId << "b" << sg.index;
-
-      Lib3dsMesh* m = batchToMesh(currBatch,
-        bmd, name.str().c_str(), currMatName, currMat);
+      Lib3dsMesh* m = batchToMesh(currBatch, bmd, buf, currMatIndex);
 /*
       for(int ti = 0; ti < 4; ++ti)
         for(int si = 0; si < 4; ++si)
@@ -451,23 +438,17 @@ void traverseSceneGraph(Lib3dsFile* file, const BModel& bmd,
 */
       if(m != NULL)
       {
-        Lib3dsNode* node = lib3ds_node_new_object();
-        node->parent_id = parent;
-        node->node_id = nextId;
-        strcpy(node->name, name.str().c_str());
-
-        lib3ds_file_insert_node(file, node);
-        lib3ds_file_insert_mesh(file, m);
+        Lib3dsNode *node = (Lib3dsNode *) lib3ds_node_new_mesh_instance(m, buf, NULL, NULL, NULL);
+        lib3ds_file_append_node(file, node, parent);
+        lib3ds_file_insert_mesh(file, m, -1);
+        parent = node;
       }
 
-      parent = nextId;
-      ++nextId;
       break;
   }
 
   for(size_t i = 0; i < sg.children.size(); ++i)
-    traverseSceneGraph(file, bmd, sg.children[i], parent, nextId,
-                       currMatName, currMat, currMatrix);
+    traverseSceneGraph(file, bmd, sg.children[i], parent, currMatIndex, currMatrix);
 }
 
 //exports a BModel to a .3ds file
@@ -528,16 +509,14 @@ void exportAs3ds(const BModel& bmd, const std::string& filename)
   {
     std::ostringstream str;
     str << "m" << i;
-    Lib3dsMaterial* mat = materialToMaterial(bmd, bmd.mat3.materials[i],
-      imageNames, str.str());
-    lib3ds_file_insert_material(file, mat);
+    Lib3dsMaterial* mat = materialToMaterial(bmd, bmd.mat3.materials[i], imageNames, str.str());
+    lib3ds_file_insert_material(file, mat, i);
   }
 
   //geometry
   SceneGraph sg;
   buildSceneGraph(bmd.inf1, sg);
-  int id = 0;
-  traverseSceneGraph(file, bmd, sg, -1, id, "", NULL);
+  traverseSceneGraph(file, bmd, sg, NULL, -1);
 
   lib3ds_file_save(file, filename.c_str());
   lib3ds_file_free(file);
