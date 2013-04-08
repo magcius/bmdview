@@ -60,7 +60,8 @@ struct Vert
 
 typedef std::map<Vert, int> PairMap;
 
-int getIndex(const Index& index, const Attributes& attribs, const PairMap& pairMap)
+static int
+getIndex(const Index& index, const Attributes& attribs, const PairMap& pairMap)
 {
   int posIndex = index.posIndex;
   int texIndex = 0, matIndex = 0;
@@ -76,7 +77,8 @@ int getIndex(const Index& index, const Attributes& attribs, const PairMap& pairM
   return it->second;
 }
 
-int countTriangles(const Primitive& curr)
+static int
+countTriangles(const Primitive& curr)
 {
   switch(curr.type)
   {
@@ -91,7 +93,8 @@ int countTriangles(const Primitive& curr)
   }
 }
 
-int countTriangles(const Packet& p)
+static int
+countTriangles(const Packet& p)
 {
   int triCount = 0;
   for(size_t i = 0; i < p.primitives.size(); ++i)
@@ -99,7 +102,8 @@ int countTriangles(const Packet& p)
   return triCount;
 }
 
-int countTriangles(const Batch& b)
+static int
+countTriangles(const Batch& b)
 {
   int triCount = 0;
   for(size_t j = 0; j < b.packets.size(); ++j)
@@ -109,8 +113,9 @@ int countTriangles(const Batch& b)
 
 //it's better if one batch is one mesh, this makes hierarchy
 //handling easier
-Lib3dsMesh* batchToMesh(const Batch& b, const BModel& bmd, const std::string& name,
-                        int matIndex)
+static Lib3dsMesh*
+batchToMesh(const Batch& b, const BModel& bmd, const std::string& name,
+            int matIndex)
 {
   const Vtx1& vtx = bmd.vtx1;
   const Attributes& attribs = b.attribs;
@@ -316,9 +321,10 @@ Lib3dsMesh* batchToMesh(const Batch& b, const BModel& bmd, const std::string& na
   return mesh;
 }
 
-Lib3dsMaterial* materialToMaterial(const BModel& bmd, const Material& mat,
-                                   const std::vector<std::string>& texNames,
-                                   const std::string& name)
+static Lib3dsMaterial*
+materialToMaterial(const BModel& bmd, const Material& mat,
+                   const std::vector<std::string>& texNames,
+                   const std::string& name)
 {
   Lib3dsMaterial* mat3ds = lib3ds_material_new(name.c_str());
 
@@ -355,14 +361,9 @@ Lib3dsMaterial* materialToMaterial(const BModel& bmd, const Material& mat,
   return mat3ds;
 }
 
-Lib3dsMesh* dummyMesh(const std::string& name)
-{
-  Lib3dsMesh* ret = lib3ds_mesh_new(name.c_str());
-  return ret;
-}
-
-void traverseSceneGraph(Lib3dsFile* file, const BModel& bmd, const SceneGraph& sg,
-                        Lib3dsNode *parent, int currMatIndex)
+static void
+traverseSceneGraph(Lib3dsFile* file, const BModel& bmd, const SceneGraph& sg,
+                   Lib3dsNode *parent, int currMatIndex)
 {
   switch(sg.type)
   {
