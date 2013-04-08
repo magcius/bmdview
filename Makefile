@@ -12,7 +12,10 @@ BMDVIEW2_OBJS = drawBmd.o main.o \
        simple_gl_common.o oglblock.o ui.o simple_gl.o \
        addons/bck.o addons/btp.o $(BASE_OBJS)
 
-all: bmdview2
+all: bmdview2 bmd23ds
 
 bmdview2: $(BMDVIEW2_OBJS)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+bmd23ds: $(BASE_OBJS) bmd23ds.o
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
