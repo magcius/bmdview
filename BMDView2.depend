@@ -1,0 +1,382 @@
+# depslib dependency file v1.0
+1355124155 source:/home/antidote/Desktop/bmdview/addons/bck.cpp
+	"bck.h"
+	<string.h>
+
+1166295581 /home/antidote/Desktop/bmdview/addons/bck.h
+	"../common.h"
+	"../jnt1.h"
+
+1166814146 /home/antidote/Desktop/bmdview/common.h
+	"common/gccommon.h"
+	<string>
+	<vector>
+	<cstdio>
+	<iosfwd>
+
+1179206874 /home/antidote/Desktop/bmdview/common/gccommon.h
+	<stdio.h>
+	<stdio.h>
+
+1166295584 /home/antidote/Desktop/bmdview/jnt1.h
+	"common.h"
+	"Vector3.h"
+	<vector>
+	<string>
+	<iosfwd>
+	"Matrix44.h"
+
+1166948001 /home/antidote/Desktop/bmdview/Vector3.h
+	"Vector3.inc"
+
+1166948029 /home/antidote/Desktop/bmdview/Vector3.inc
+	"Vector3.h"
+	<cmath>
+	<iostream>
+
+1166295584 /home/antidote/Desktop/bmdview/Matrix44.h
+	"Matrix44.inc"
+
+1166295584 /home/antidote/Desktop/bmdview/Matrix44.inc
+	<cmath>
+	<algorithm>
+
+1355124173 source:/home/antidote/Desktop/bmdview/addons/btp.cpp
+	"btp.h"
+	<string.h>
+	<algorithm>
+
+1167414564 /home/antidote/Desktop/bmdview/addons/btp.h
+	"../common.h"
+	"../mat3.h"
+
+1166295584 /home/antidote/Desktop/bmdview/mat3.h
+	"common.h"
+	<iosfwd>
+
+1355124199 source:/home/antidote/Desktop/bmdview/addons/export3ds.cpp
+	"export3ds.h"
+	<map>
+	<string.h>
+	<set>
+	<sstream>
+	<iomanip>
+	<algorithm>
+	<cassert>
+	"lib3ds/file.h"
+	"lib3ds/mesh.h"
+	"lib3ds/node.h"
+	"lib3ds/material.h"
+	"lib3ds/matrix.h"
+	"lib3ds/vector.h"
+	"../common.h"
+	"exportTexture.h"
+	"../transformtools.h"
+
+1166295581 /home/antidote/Desktop/bmdview/addons/export3ds.h
+	<string>
+	"../bmdread.h"
+
+1166295584 /home/antidote/Desktop/bmdview/bmdread.h
+	<vector>
+	<string>
+	<iosfwd>
+	"Vector3.h"
+	"common.h"
+	"inf1.h"
+	"vtx1.h"
+	"evp1.h"
+	"drw1.h"
+	"jnt1.h"
+	"shp1.h"
+	"mat3.h"
+	"tex1.h"
+	"mdl3.h"
+
+1166295584 /home/antidote/Desktop/bmdview/inf1.h
+	"common.h"
+	<vector>
+	<iosfwd>
+
+1166295584 /home/antidote/Desktop/bmdview/vtx1.h
+	"common.h"
+	<vector>
+	<iosfwd>
+	"Vector3.h"
+
+1166295584 /home/antidote/Desktop/bmdview/evp1.h
+	"common.h"
+	<iosfwd>
+	"Matrix44.h"
+
+1166295584 /home/antidote/Desktop/bmdview/drw1.h
+	"common.h"
+	<vector>
+	<iosfwd>
+
+1166295584 /home/antidote/Desktop/bmdview/shp1.h
+	<vector>
+	<iosfwd>
+	"common.h"
+	"Vector3.h"
+
+1167265554 /home/antidote/Desktop/bmdview/tex1.h
+	"common.h"
+	<vector>
+	<string>
+	<iosfwd>
+
+1166295584 /home/antidote/Desktop/bmdview/mdl3.h
+	<iosfwd>
+
+1166295581 /home/antidote/Desktop/bmdview/addons/exportTexture.h
+	<string>
+	"../bmdread.h"
+
+1166814419 /home/antidote/Desktop/bmdview/transformtools.h
+	<vector>
+	"Matrix44.h"
+	"Vector3.h"
+	"bmdread.h"
+	"shp1.h"
+	"jnt1.h"
+
+1355124216 source:/home/antidote/Desktop/bmdview/addons/exportTexture.cpp
+	"exportTexture.h"
+	<cassert>
+	<set>
+	<algorithm>
+	<string.h>
+	"../common.h"
+
+1167415583 source:/home/antidote/Desktop/bmdview/addons/exportb3d.cpp
+	"exportb3d.h"
+
+1167332404 /home/antidote/Desktop/bmdview/addons/exportb3d.h
+	<string>
+	"../bmdread.h"
+	"bck.h"
+
+1167332569 source:/home/antidote/Desktop/bmdview/addons/exportx.cpp
+	"exportx.h"
+	<fstream>
+	"../transformtools.h"
+
+1166295581 /home/antidote/Desktop/bmdview/addons/exportx.h
+	<string>
+	"../bmdread.h"
+
+1166826929 source:/home/antidote/Desktop/bmdview/bmdinfo.cpp
+	<iostream>
+	<cstdarg>
+	"bmdread.h"
+	"openfile.h"
+	"addons/exportTexture.h"
+	"addons/export3ds.h"
+
+1166295584 /home/antidote/Desktop/bmdview/openfile.h
+	<string>
+	<cstdio>
+
+1355124231 source:/home/antidote/Desktop/bmdview/bmdread.cpp
+	"bmdread.h"
+	<string.h>
+	<iostream>
+
+1167416248 source:/home/antidote/Desktop/bmdview/camera.cpp
+	"camera.h"
+	"GL/glew.h"
+
+1166901429 /home/antidote/Desktop/bmdview/camera.h
+	"Matrix44.h"
+
+1167248974 source:/home/antidote/Desktop/bmdview/common.cpp
+	"common.h"
+	<iostream>
+
+1167414933 source:/home/antidote/Desktop/bmdview/drawBmd.cpp
+	"drawbmd.h"
+	"bmdread.h"
+	"simple_gl.h"
+	<cassert>
+	<sstream>
+	"transformtools.h"
+	"camera.h"
+	"oglblock.h"
+
+1166295584 /home/antidote/Desktop/bmdview/drawbmd.h
+	<vector>
+	"inf1.h"
+
+1167137335 /home/antidote/Desktop/bmdview/simple_gl.h
+	<string>
+	"common.h"
+	<windows.h>
+
+1166295584 /home/antidote/Desktop/bmdview/oglblock.h
+	"common.h"
+	"GL/glew.h"
+	<vector>
+	<string>
+	"bmdread.h"
+
+1355124330 source:/home/antidote/Desktop/bmdview/drawtext.cpp
+	"drawtext.h"
+	"GL/glew.h"
+	<string>
+	<string.h>
+	<stdlib.h>
+	<stdio.h>
+	<vector>
+	<utility>
+
+1166951730 /home/antidote/Desktop/bmdview/drawtext.h
+	"GL/glew.h"
+	<string>
+	<cstdarg>
+
+1166514267 source:/home/antidote/Desktop/bmdview/drw1.cpp
+	"drw1.h"
+	<iostream>
+
+1167245624 source:/home/antidote/Desktop/bmdview/evp1.cpp
+	"evp1.h"
+	<iostream>
+
+1167245624 source:/home/antidote/Desktop/bmdview/inf1.cpp
+	"inf1.h"
+	<iostream>
+
+1167248974 source:/home/antidote/Desktop/bmdview/jnt1.cpp
+	"jnt1.h"
+	<iostream>
+
+1226280055 source:/home/antidote/Desktop/bmdview/main.cpp
+	"simple_gl.h"
+	"simple_gl_common.h"
+	"openfile.h"
+	"bmdread.h"
+	"drawbmd.h"
+	"drawtext.h"
+	"parameters.h"
+	"camera.h"
+	"oglblock.h"
+	"addons/bck.h"
+	"addons/btp.h"
+	"addons/export3ds.h"
+	"addons/exportTexture.h"
+	<cstdarg>
+
+1167131611 /home/antidote/Desktop/bmdview/simple_gl_common.h
+
+1166951070 /home/antidote/Desktop/bmdview/parameters.h
+	<string>
+	<vector>
+
+1355124345 source:/home/antidote/Desktop/bmdview/mat3.cpp
+	"mat3.h"
+	<cassert>
+	<string.h>
+	<sstream>
+	<iomanip>
+	<fstream>
+	<iostream>
+
+1166295584 source:/home/antidote/Desktop/bmdview/mdl3.cpp
+	"mdl3.h"
+	<iostream>
+	<string>
+
+1179209536 source:/home/antidote/Desktop/bmdview/oglblock.cpp
+	"oglblock.h"
+	"simple_gl.h"
+	<sstream>
+	<fstream>
+
+1355124377 source:/home/antidote/Desktop/bmdview/openfile.cpp
+	"openfile.h"
+	"common.h"
+	<vector>
+	<cstdio>
+	<string.h>
+	<windows.h>
+
+1226279696 source:/home/antidote/Desktop/bmdview/parameters.cpp
+	"parameters.h"
+
+1167246490 source:/home/antidote/Desktop/bmdview/shp1.cpp
+	"shp1.h"
+	<cassert>
+	<iostream>
+
+1167131628 source:/home/antidote/Desktop/bmdview/simple_gl_common.cpp
+	"simple_gl_common.h"
+	<cmath>
+	"GL/glew.h"
+	"common.h"
+	"camera.h"
+	"clock.h"
+	"simple_gl.h"
+
+1166903365 /home/antidote/Desktop/bmdview/clock.h
+
+1355123773 source:/home/antidote/Desktop/bmdview/simple_gl_glut.cpp
+	<iostream>
+	<string>
+	"GL/glew.h"
+	<GLUT/glut.h>
+	"mac.h"
+	<GL/glut.h>
+	"parameters.h"
+	"simple_gl_common.h"
+	"drawtext.h"
+	"simple_gl.h"
+	"ui.h"
+	"resource.h"
+	"main.h"
+	<3DConnexionClient/ConnexionClientAPI.h>
+	"camera.h"
+
+1226282912 /home/antidote/Desktop/bmdview/mac.h
+
+1179211397 /home/antidote/Desktop/bmdview/ui.h
+	<string>
+
+1166295584 /home/antidote/Desktop/bmdview/resource.h
+
+1179198203 /home/antidote/Desktop/bmdview/main.h
+	"drawbmd.h"
+
+1355124523 source:/home/antidote/Desktop/bmdview/tex1.cpp
+	"tex1.h"
+	<set>
+	<map>
+	<iostream>
+	<string.h>
+	"GL/glew.h"
+	"simple_gl.h"
+
+1167245624 source:/home/antidote/Desktop/bmdview/transformtools.cpp
+	"transformtools.h"
+	<cassert>
+
+1355125683 source:/home/antidote/Desktop/bmdview/ui.cpp
+	"ui.h"
+	<string>
+	<sstream>
+	"addons/export3ds.h"
+	"addons/exportTexture.h"
+	"drawbmd.h"
+	"oglblock.h"
+	<iostream>
+	<windows.h>
+	"textbox.h"
+	"main.h"
+
+1166295584 /home/antidote/Desktop/bmdview/textbox.h
+	<windows.h>
+
+1167245624 source:/home/antidote/Desktop/bmdview/vtx1.cpp
+	"vtx1.h"
+	<iostream>
+

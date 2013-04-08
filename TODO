@@ -1,0 +1,6 @@
+20130210 - DA
+
+* Fix issue with Mario's eyes not showing up except when 'G' is hit
+DONE * When displaying bones, show it in front of rendered object
+DONE * Help text (when F1 pressed) not showing up
+DONE * Mouse input for dragging viewpoint

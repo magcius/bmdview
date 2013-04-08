@@ -1,0 +1,72 @@
+This code lives at the google code server here:
+http://code.google.com/p/bmdview2/
+
+
+Originally it came from this discussion thread:
+http://www.emutalk.net/threads/54262-BMDView2-Linux?p=447701
+
+And that had this download link:
+http://dl.dropbox.com/u/21757902/bmdview2.tar.gz
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Here's an older Readme.txt file that I found from a file BMDview2.rar
+
+latest version of BMD View 2 at
+
+http://emutalk.net/showthread.php?t=26919&page=18
+
+without the install. Later versions of the BMD View 2 might show up later
+in the thread.
+
+==Controls==
+-Move controls-
+to move, use the arrow keys. Forward and backward to move forward and
+backward, and left and right to pan. Hold Shift to go faster while you
+move, and Ctrl to move slower. Also, you can use I, J, K, and L to look
+around (Holding left click and moving the mouse works also) Use U, and
+O to rotate the view.
+
+-control model properties-
+(press F1 to show controls)
+W - For Wireframe
+T - Scene Graph (use with shift to hide joints)
+B - Show Bones of the model
+c - Don't cull (shows back sides of polygons)
+A - Don't alphaset (renders transparent colors)
+Q - Don't Blend (renders translucent textures as white)
+E - Color weighted verticies*
+H - Hide model (use for seeing bones easier)*
+G - Disable Shaders*
+1 - Show only vertex colors (disables textures)*
+2 - Ignore Vertex color (renders with textures as their normal colors)
+9 - Show batch Bounding Boxes
+0 - Show joint bounding Boxes
+*Use to increase FPS.
+
+-How to view models and animations-
+Besides the obvious ways of file>open, and dragging the file on the
+executable, you can open a blank window and drag the model in the
+window.
+
+When the model is open, you can drag animation files in the window
+(.bck, and .btp) but the animation has to correspond with the model,
+usually the names of the files will have the same beginning.
+
+==Reasons for bugs==
+First of all, make sure that you have the latest drivers for your
+graphics card, and make sure your graphics card also supports Pixel
+shaders. You might find graphics glitches if your graphics card
+doesnt support support pixel shaders.
+
+==closing notes==
+This model viewer was written by Thakis, with thanks to yaz0r,
+_demo_, Master PhW, and Lightning. Readme written by BlueFalcon7.
+This viewer has no affiliation with Nintendo what so ever.
+
+The official emutalk thread for this program can be found at
+
+http://www.emutalk.net/showthread.php?t=26062
+(part 1), and at
+
+http://emutalk.net/showthread.php?t=26919
+(part 2).

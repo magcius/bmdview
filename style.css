@@ -1,0 +1,59 @@
+/* somewhat inspired by TextMate's bright theme*/
+
+body
+{
+  background: #FFF;
+  color: #000;
+  font-family: sans-serif;
+}
+
+h1
+{
+  text-shadow:  #DDDDDD 3px 3px 5px;
+  color: #333;
+  border-style: none none dotted none;
+}
+
+h2
+{
+  color: #222;
+  text-shadow:  #DDDDDD 3px 3px 5px;
+}
+
+h3
+{
+  color: #333;
+  text-shadow:  #DDDDDD 3px 3px 5px;
+}
+
+h4
+{
+  color: #666;
+}
+
+code, pre
+{
+  font-size: 95%;
+  font-family: "LuxiMono", "Bitstream Vera Sans Mono", "Monaco", "Courier New", monospace;
+  word-wrap: break-word;
+  white-space: pre;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -o-pre-wrap;
+}
+
+code
+{
+  color: #1C360C;
+}
+
+pre
+{
+  background-color: #f0f0f0;
+  border: 1px solid #cccbba;
+  padding: 10px 10px 10px 20px;
+}
+
+/*p { margin-left: 20px }*/
+img { border: 0 }
+

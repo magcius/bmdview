@@ -1,0 +1,9 @@
+*.o
+*.dll
+*.exe
+*.tga
+*.bmd
+*.bdl
+*.3ds
+lib3ds*
+GL/

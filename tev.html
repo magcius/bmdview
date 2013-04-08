@@ -1,0 +1,426 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" title="Default" type="text/css" href="style.css" />
+	<title>Gamecube-Flipper semidocumentation</title>
+	
+</head>
+
+<body>
+<h1 id="flipper">Flipper</h1>
+
+<h2 id="overview">Overview</h2>
+
+<p>This describes how some parts of Flipper (the graphics chip of the Gamecube). I&#8217;ll probably add more descriptions if you want. I don&#8217;t describe how indirect tev works, because I don&#8217;t know that. If you know, tell me :-) If some of the things discussed in this document are wrong, let me know as well.</p>
+
+<p>This document would not have been possible without <a href="www.devkitpro.org">libogc</a>, especially <a href="http://devkitpro.cvs.sourceforge.net/devkitpro/libogc/gc/ogc/gx.h?view=log">gx.h</a> and <a href="http://devkitpro.cvs.sourceforge.net/devkitpro/libogc/libogc/gx.c?view=log">gx.c</a>.</p>
+
+<h2 id="texgen">Texgen</h2>
+
+<p>You don&#8217;t always need explicit texture coordinates if you want to use a texture. For example, you could compute texture coordinates from the vertex positions, or you could use one set of texture coordinates for different texture units. Texgen (&#8216;texture coord generation&#8217;) is a means to accomplish that. This section discusses the texgen unit.</p>
+
+<p>You call</p>
+
+<pre><code>void GX_SetNumTexGens(u32 nr);
+</code></pre>
+
+<p>to specify for how many texture units you want to enable texgen for.</p>
+
+<p>To control how texture coordinates are computed, you call</p>
+
+<pre><code>void GX_SetTexCoordGen(u16 texcoord,u32 tgen_typ,u32 tgen_src,u32 mtxsrc);
+</code></pre>
+
+<p><code>texcoord</code> can be one of</p>
+
+<pre><code>GX_TEXCOORD0
+GX_TEXCOORD1
+GX_TEXCOORD2
+GX_TEXCOORD3
+GX_TEXCOORD4
+GX_TEXCOORD5
+GX_TEXCOORD6
+GX_TEXCOORD7
+</code></pre>
+
+<p>and specifies texgen for which texture coordinate you&#8217;re going to configure.</p>
+
+<p><code>tgen_typ</code> is used to specify <em>how</em> texture coordinates are generated from the inputs. I don&#8217;t really know how all these functions work, but I provide a few guesses. I have no idea at all how the <code>BUMP</code> stuff works.</p>
+
+<pre><code>GX_TG_MTX3x4
+    output = 3x4matrix * input (u, v, w generated)
+
+GX_TG_MTX2x4
+    output = 2x4matrix * input (u, v generated)
+
+GX_TG_BUMP0
+GX_TG_BUMP1
+GX_TG_BUMP2
+GX_TG_BUMP3
+GX_TG_BUMP4
+GX_TG_BUMP5
+GX_TG_BUMP6
+GX_TG_BUMP7
+GX_TG_SRTG
+    I believe this is 'spherical reflection coord generation' like
+    implemented in OpenGL
+</code></pre>
+
+<p><code>tgen_src</code> is used to tell the texgen unit what is the <em>input</em> for the generation function. I don&#8217;t know what the <code>TG_TEXn</code> constants are for, the rest is self-explanatory.</p>
+
+<pre><code>GX_TG_POS
+GX_TG_NRM
+GX_TG_BINRM
+GX_TG_TANGENT
+GX_TG_TEX0
+GX_TG_TEX1
+GX_TG_TEX2
+GX_TG_TEX3
+GX_TG_TEX4
+GX_TG_TEX5
+GX_TG_TEX6
+GX_TG_TEX7
+GX_TG_TEXCOORD0
+GX_TG_TEXCOORD1
+GX_TG_TEXCOORD2
+GX_TG_TEXCOORD3
+GX_TG_TEXCOORD4
+GX_TG_TEXCOORD5
+GX_TG_TEXCOORD6
+GX_TG_COLOR0
+GX_TG_COLOR1
+</code></pre>
+
+<p>There is another function to control texgen that provides a few more options:</p>
+
+<pre><code>void GX_SetTexCoordGen2(u16 texcoord,u32 tgen_typ,u32 tgen_src,u32 mtxsrc,
+                        u32 normalize,u32 postmtx);
+</code></pre>
+
+<p>This is like <code>GX_SetTexCoordGen</code> with a few additional parameters. I don&#8217;t know what this does (I guess it does the same as <code>GX_SetTexCoordGen</code>, but optionally normalizes the generated texture coordinate to unit length and multiplies it with a post processing matrix).</p>
+
+<h2 id="tev">TEV</h2>
+
+<p>The Gamecube doesn&#8217;t really have a programmable graphics pipeline, only a set of 16 TEV stages that can combine colors in a fixed way. A single TEV stage has 4 inputs and 1 output. The output is calculated by selecting one of several fixed functions on the inputs. In only discuss the &#8216;color&#8217; functions, the alpha functions are very similar. You should be able to figure them out yourself by looking at gx.h.</p>
+
+<p>In the remainder, the 4 inputs of a tev a called <code>a</code>, <code>b</code>, <code>c</code> and <code>d</code>, the output is called <code>out</code>.</p>
+
+<h3 id="gx_setnumtevstages"><code>GX_SetNumTevStages</code></h3>
+
+<p>You configure how many of the 16 tev stages are used by calling</p>
+
+<pre><code>void GX_SetNumTevStages(u8 num);
+</code></pre>
+
+<p>For color computation, the first <code>num</code> tev stages are executed. The color which ends up in the &#8216;previous color register&#8217; at the end of these <code>num</code> stages is used as the color for the current pixel.</p>
+
+<h3 id="gx_settevcolorop"><code>GX_SetTevColorOp</code></h3>
+
+<p>The central function to configure a tev unit is</p>
+
+<pre><code>void GX_SetTevColorOp(u8 tevstage,u8 tevop,u8 tevbias,u8 tevscale,u8 clamp,u8 tevregid);
+</code></pre>
+
+<p><code>tevstage</code> is one of <code>GX_TEVSTAGE0</code> to <code>GX_TEVSTAGE15</code> and identifies the tev unit you want to configure.</p>
+
+<p><code>tevop</code> is one of the following functions:</p>
+
+<pre><code>GX_TEV_ADD
+    out = a*(1 - c) + b*c + d
+
+GX_TEV_SUB
+    out = -a*(1 - c) - b*c + d  (not 100% sure with this, please confirm)
+
+GX_TEV_COMP_R8_GT
+    if(a.r &gt; b.r) out = c; else out = d;
+
+GX_TEV_COMP_R8_EQ
+    if(a.r == b.r) out = c; else out = d;
+
+GX_TEV_COMP_GR16_GT
+GX_TEV_COMP_GR16_EQ
+    same as r8, but use gr as 16 bit value for comparing
+
+GX_TEV_COMP_BGR24_GT
+GX_TEV_COMP_BGR24_EQ
+    same as r8, but use bgr as 24 bit value for comparing
+
+GX_TEV_COMP_RGB8_GT
+GX_TEV_COMP_RGB8_EQ
+    Not sure with this, but I think this compares rgb independently. Can
+    you confirm this? (this is not done correctly in bmdview's source)
+</code></pre>
+
+<p>and controls which operation the tev stage will perform (discussed in more detail below).</p>
+
+<p><code>tevbias</code> is one of</p>
+
+<pre><code>GX_TB_ZERO
+GX_TB_ADDHALF
+GX_TB_SUBHALF
+</code></pre>
+
+<p><code>tevscale</code> is one of</p>
+
+<pre><code>GX_CS_SCALE_1
+GX_CS_SCALE_2
+GX_CS_SCALE_4
+GX_CS_DIVIDE_2
+</code></pre>
+
+<p><code>clamp</code> is <code>GX_TRUE</code> or <code>GX_FALSE</code>.</p>
+
+<p>After the tev operation has executed, the output is modified by <code>bias</code>, <code>scale</code> and <code>clamp</code> as follows (in this order):</p>
+
+<pre><code>out = out + bias; //for each component; bias is 0, 0.5 or -0.5
+out = out * scale; //scale is 1, 2, 4 or 0.5
+if(clamp)
+  clamp out to [0.0, 1.0] in each component
+</code></pre>
+
+<p>If tev op is not <code>GX_TEV_ADD</code> or <code>GX_TEV_SUB</code>, <code>bias</code>, <code>scale</code> and <code>clamp</code> shall be ignored.</p>
+
+<p><code>tevregid</code> is one of</p>
+
+<pre><code>GX_TEVPREV
+    regPrev.rgb = out.rgb
+
+GX_TEVREG0
+    reg0.rgb = out.rgb
+
+GX_TEVREG1
+    reg1.rgb = out.rgb
+
+GX_TEVREG2
+    reg2.rgb = out.rgb
+</code></pre>
+
+<p>and specifies in which register <code>out</code> is written.</p>
+
+<h3 id="gx_settevcolorin"><code>GX_SetTevColorIn</code></h3>
+
+<p>To control which are the 4 inputs of a tev stage, you call</p>
+
+<pre><code>void GX_SetTevColorIn(u8 tevstage,u8 a,u8 b,u8 c,u8 d);
+</code></pre>
+
+<p><code>tevstage</code> is again a tev stage identifier.</p>
+
+<p><code>a</code>, <code>b</code>, <code>c</code> and <code>d</code> specify which is loaded into <code>a</code>, <code>b</code>, <code>c</code> and <code>d</code> in the equations above:</p>
+
+<pre><code>GX_CC_CPREV
+    a.rgb = regPrev.rgb
+
+GX_CC_APREV
+    a.rgb = regPrev.aaa
+
+GX_CC_C0
+    a.rgb = reg0.rgb
+
+GX_CC_A0
+    a.rgb = reg0.aaa
+
+GX_CC_C1
+    a.rgb = reg1.rgb
+
+GX_CC_A1
+    a.rgb = reg1.aaa
+
+GX_CC_C2
+    a.rgb = reg2.rgb
+
+GX_CC_A2
+    a.rgb = reg2.aaa
+
+GX_CC_TEXC
+    a.rgb = textureBoundToTev.rgb (see GX_SetTevOrder below)
+
+GX_CC_TEXA
+    a.rgb = textureBoundToTev.rgb (see GX_SetTevOrder below)
+
+GX_CC_RASC
+    a.rgb = rasColor.rgb (see below)
+
+GX_CC_RASA
+    a.rgb = rasColor.aaa (see below)
+
+GX_CC_ONE
+    a.rgb = (1.0, 1.0, 1.0)
+
+GX_CC_HALF
+    a.rgb = (0.5, 0.5, 0.5)
+
+GX_CC_KONST
+    a.rgb = konst (see GX_SetTevKColorSel below)
+
+GX_CC_ZERO
+    a.rgb = (0.0, 0.0, 0.0)
+</code></pre>
+
+<p>In the list above, <code>a</code> is of course only used as an example &#8212; could be <code>b</code>, <code>c</code> or <code>d</code> as well :-P</p>
+
+<p><code>rasColor</code> is the color which is passed from the &#8216;vertex shader&#8217;, usually this is simply the vertex color. More information later if you need it (TODO: see <code>GX_SetTevOrder</code>?).</p>
+
+<h3 id="gx_settevorder"><code>GX_SetTevOrder</code></h3>
+
+<p>If you use <code>GX_CC_TEXC</code>, <code>GX_CC_TEXA</code>, <code>GX_CC_RASC</code> or <code>GX_CC_RASA</code> in <code>GX_SetTevColorIn</code>, you use</p>
+
+<pre><code>void GX_SetTevOrder(u8 tevstage,u8 texcoord,u32 texmap,u8 color);
+</code></pre>
+
+<p>to specify which texture is used for the texture input and which color for the ras color.</p>
+
+<p><code>tevstage</code> is the usual tev stage identifier.</p>
+
+<p><code>texcoord</code> is one of</p>
+
+<pre><code>GX_TEXCOORD0
+GX_TEXCOORD1
+GX_TEXCOORD2
+GX_TEXCOORD3
+GX_TEXCOORD4
+GX_TEXCOORD5
+GX_TEXCOORD6
+GX_TEXCOORD7
+GX_TEXCOORDNULL
+</code></pre>
+
+<p>and tells the tev unit which texture coordinate channel is used to access the texture. Note: The texture coordinate <em>after</em> texgen is used (texgen is not described in this document yet &#8212; for now pretend that this makes no difference). Use <code>GX_TEXCOORDNULL</code> if you don&#8217;t need a texture input for the tev unit.</p>
+
+<p><code>texmap</code> is</p>
+
+<pre><code>GX_TEXMAP0
+GX_TEXMAP1
+GX_TEXMAP2
+GX_TEXMAP3
+GX_TEXMAP4
+GX_TEXMAP5
+GX_TEXMAP6
+GX_TEXMAP7
+GX_TEXMAP_NULL
+</code></pre>
+
+<p>and specifies which texture image should be used as input for <code>tevstage</code>. Pass <code>GX_TEXMAP_NULL</code> if the texture input is not used in the current tev.</p>
+
+<p>I&#8217;m pretty sure that <code>color</code> is one of</p>
+
+<pre><code>GX_COLOR0
+GX_COLOR1
+GX_ALPHA0
+GX_ALPHA1
+GX_COLOR0A0
+GX_COLOR1A1
+GX_COLORZERO
+GX_BUMP 
+GX_BUMPN
+GX_COLORNULL
+</code></pre>
+
+<p>but I don&#8217;t really know what all these constants mean. The <em>do</em> specify what is used as ras color in the tev. I guess <code>COLOR0</code> and <code>COLOR1</code> are simply the primary and secondary vertex color, but I don&#8217;t know how the bump stuff works.</p>
+
+<h3 id="gx_settevkcolorsel"><code>GX_SetTevKColorSel</code></h3>
+
+<p>If <code>GX_CC_KONST</code> is used as one of the 4 inputs to a tev stage in <code>GX_SetTevColorIn</code>, you specify which constant is used with</p>
+
+<pre><code>void GX_SetTevKColorSel(u8 tevstage,u8 sel);
+</code></pre>
+
+<p><code>tevstage</code> is the usual tev stage identifier.</p>
+
+<p><code>sel</code> is one of</p>
+
+<pre><code>GX_TEV_KCSEL_1
+GX_TEV_KCSEL_7_8
+GX_TEV_KCSEL_3_4
+GX_TEV_KCSEL_5_8
+GX_TEV_KCSEL_1_2
+GX_TEV_KCSEL_3_8
+GX_TEV_KCSEL_1_4
+GX_TEV_KCSEL_1_8
+GX_TEV_KCSEL_K0
+GX_TEV_KCSEL_K1
+GX_TEV_KCSEL_K2
+GX_TEV_KCSEL_K3
+GX_TEV_KCSEL_K0_R
+GX_TEV_KCSEL_K1_R
+GX_TEV_KCSEL_K2_R
+GX_TEV_KCSEL_K3_R
+GX_TEV_KCSEL_K0_G
+GX_TEV_KCSEL_K1_G
+GX_TEV_KCSEL_K2_G
+GX_TEV_KCSEL_K3_G
+GX_TEV_KCSEL_K0_B
+GX_TEV_KCSEL_K1_B
+GX_TEV_KCSEL_K2_B
+GX_TEV_KCSEL_K3_B
+GX_TEV_KCSEL_K0_A
+GX_TEV_KCSEL_K1_A
+GX_TEV_KCSEL_K2_A
+GX_TEV_KCSEL_K3_A
+</code></pre>
+
+<p>The first few functions are simply the constants 1.0, 7.0/8.0, &#8230;, 1.0/8.0. The other constants select which of the 4 constant color registers are used. You load values in the constant color registers with XXX.</p>
+
+<h3 id="gx_settevcolor"><code>GX_SetTevColor</code></h3>
+
+<p>To load a color into a tev register, you call</p>
+
+<pre><code>void GX_SetTevColor(u8 tev_regid,GXColor color);
+</code></pre>
+
+<p><code>tev_regid</code> is a tev register identifier &#8212; these registers are shared by all tev stages. Valid values are</p>
+
+<pre><code>TODO (I guess values from 0 to 3 for the 4 constant color registers)
+</code></pre>
+
+<p><code>color</code> is the color to load into <code>tev_regid</code>. Who would have thought?</p>
+
+<h3 id="swap_mode_tables">Swap Mode Tables</h3>
+
+<p>No bmd/bdl file I know of uses the stuff described in this section. It&#8217;s not that important to emulate it I guess ;-)</p>
+
+<p>You can swizzle the ras color and the tex colors before they are given to the tev stages. For this, there are four different swap mode tables,</p>
+
+<pre><code>GX_TEV_SWAP0
+GX_TEV_SWAP1
+GX_TEV_SWAP2
+GX_TEV_SWAP3
+</code></pre>
+
+<p>which are configures via GX_SetTevSwapModeTable (below). To use these tables, you call</p>
+
+<pre><code>void GX_SetTevSwapMode(u8 tevstage,u8 ras_sel,u8 tex_sel);
+</code></pre>
+
+<p><code>tevstage</code> is the usual tev stage id.</p>
+
+<p><code>ras_sel</code> is the swap mode table identifier to use for the ras color.</p>
+
+<p><code>tex_sel</code> is the swap mode table identifier to use for the tex color.</p>
+
+<p>To configure what a swap mode table does, you call</p>
+
+<pre><code>void GX_SetTevSwapModeTable(u8 swapid,u8 r,u8 g,u8 b,u8 a);
+</code></pre>
+
+<p><code>swapid</code> is a swap mode table identifier.</p>
+
+<p><code>r</code>, <code>g</code>, <code>b</code> and <code>a</code> specify which channel of the original color should be passed to the tev stage as r, g, b or a. Valid values are</p>
+
+<pre><code>GX_CH_RED
+GX_CH_GREEN
+GX_CH_BLUE
+GX_CH_ALPHA
+</code></pre>
+
+<h2 id="examples">Examples</h2>
+
+<p>TODO. For now, <code>void GX_SetTevOp(u8 tevstage,u8 mode)</code> from gx.c is a good example.</p>
+
+<p>By thakis@users.sourceforge.net.</p>
+
+</body>
+</html>

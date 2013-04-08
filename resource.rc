@@ -1,0 +1,46 @@
+#include "resource.h"
+#include <winuser.h>
+
+//icon
+IDI_ICON ICON DISCARDABLE "icon.ico"
+
+//menu
+IDM_MENU MENU
+BEGIN
+  POPUP "&File"
+  BEGIN
+    MENUITEM "&Open model...",  MENU_FILE_OPEN_MODEL
+    MENUITEM "Me&rge model...",  MENU_FILE_MERGE_MODEL
+    MENUITEM "Open &animation...",  MENU_FILE_OPEN_ANIMATION
+    MENUITEM SEPARATOR
+    MENUITEM "Export &model...",  MENU_FILE_EXPORT_MODEL
+    MENUITEM "Export &textures...",  MENU_FILE_EXPORT_TEXTURES
+    MENUITEM SEPARATOR
+    MENUITEM "&Export shaders",  MENU_FILE_EXPORT_SHADERS
+    MENUITEM "&Re-import shaders",  MENU_FILE_REIMPORT_SHADERS
+    MENUITEM "Re&generate shaders",  MENU_FILE_REGENERATE_SHADERS
+    MENUITEM SEPARATOR
+    MENUITEM "E&xit",       MENU_FILE_EXIT
+  END 
+  POPUP "&Help"
+  BEGIN
+    MENUITEM "&About...",   MENU_HELP_ABOUT
+  END
+  POPUP "&Debug"
+  BEGIN
+    MENUITEM "&Section info...", MENU_DEBUG_SECTIONINFO
+  END
+END
+
+//about dialog
+IDD_ABOUT DIALOG DISCARDABLE  80, 40, 175, 109
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About bmdview2"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,59,79,50,14
+    ICON            IDI_ICON,0,15,14,21,20
+    LTEXT           "bmdview2\nby thakis\n\nthanks to yaz0r, _demo_, MasterPhW, lightning",
+                    0,78,14,74,51
+    LTEXT           "Build 20050842",IDC_ABOUT_DATE,15,47,55,18
+END
