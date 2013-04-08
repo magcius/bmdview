@@ -389,53 +389,23 @@ Lib3dsMesh* dummyMesh(const std::string& name)
 }
 
 void traverseSceneGraph(Lib3dsFile* file, const BModel& bmd, const SceneGraph& sg,
-                        Lib3dsNode *parent, int currMatIndex,
-                        Matrix44f currMatrix = Matrix44f::IDENTITY)
+                        Lib3dsNode *parent, int currMatIndex)
 {
   switch(sg.type)
   {
-    case 0x10: //joint
-    {/*
-      const Frame& f = bmd.jnt1.frames[sg.index];
-      currMatrix = frameMatrix(f);
-
-      std::ostringstream name;
-      name << "n" << nextId << "d" << sg.index;
-      Lib3dsMesh* m = dummyMesh(name.str());
-
-      if(m != NULL)
-      {
-        for(int ti = 0; ti < 4; ++ti)
-          for(int si = 0; si < 4; ++si)
-            m->matrix[ti][si] = currMatrix[si][ti];
-
-        Lib3dsNode* node = lib3ds_node_new_object();
-        node->parent_id = parent;
-        node->node_id = nextId;
-        strcpy(node->name, name.str().c_str());
-
-        lib3ds_file_insert_node(file, node);
-        lib3ds_file_insert_mesh(file, m);
-
-        parent = nextId;
-        ++nextId;
-      }*/
-    }break;
-    case 0x11: //material
-    {
+    case 0x10: // joint
+      // XXX - joints
+      break;
+    case 0x11: // material
       currMatIndex = bmd.mat3.indexToMatIndex[sg.index];
-    }break;
-    case 0x12: //batch
+      break;
+    case 0x12: // batch
       const Batch& currBatch = bmd.shp1.batches[sg.index];
       char buf[8] = { 0 };
       snprintf(buf, sizeof(buf)-1, "n%d", sg.index);
 
       Lib3dsMesh* m = batchToMesh(currBatch, bmd, buf, currMatIndex);
-/*
-      for(int ti = 0; ti < 4; ++ti)
-        for(int si = 0; si < 4; ++si)
-          m->matrix[ti][si] = currMatrix[ti][si];
-*/
+
       if(m != NULL)
       {
         Lib3dsNode *node = (Lib3dsNode *) lib3ds_node_new_mesh_instance(m, buf, NULL, NULL, NULL);
@@ -448,7 +418,7 @@ void traverseSceneGraph(Lib3dsFile* file, const BModel& bmd, const SceneGraph& s
   }
 
   for(size_t i = 0; i < sg.children.size(); ++i)
-    traverseSceneGraph(file, bmd, sg.children[i], parent, currMatIndex, currMatrix);
+    traverseSceneGraph(file, bmd, sg.children[i], parent, currMatIndex);
 }
 
 //exports a BModel to a .3ds file
