@@ -10,12 +10,13 @@
 #endif
 using namespace std;
 
+#include "GL/glew.h"
+
 #include "Matrix44.h"
 
 #include "resource.h"
 #include "ui.h"
 
-#include "drawtext.h"
 #include "parameters.h"
 #include "simple_gl_common.h"
 #include "camera.h"
@@ -74,15 +75,6 @@ string getCommand()
 
 void flush()
 {
-  //draw strings
-  if(!isKeyPressed(VK_TAB))
-  {
-    //use g_glyphMetrics[currChar].gmCellIncX for char width?
-    renderTexts(g_width, g_height,
-            g_fontMetrics.tmAveCharWidth, g_fontMetrics.tmHeight,
-            g_fontBase, 1.f/getAverageSecondsPerFrame());
-  }
-
   glFlush();
   SwapBuffers(g_hDc);
 }
@@ -496,8 +488,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE old, LPSTR params, int showCom)
 
       if(g_isInputComplete)
         handleCamera();
-      else
-        drawText(g_input.c_str());
 
       draw();
       setLastFrameSeconds((GetTickCount() - startTime)/1000.0f);

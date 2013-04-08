@@ -66,7 +66,7 @@ void setFilters(int magFilter, int minFilter, int mipCount)
     }
     else
     {
-      drawText("Texture LOD not supported, using linear filter");
+      fprintf(stderr, "Texture LOD not supported, using linear filter\n");
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                       GL_LINEAR);
     }

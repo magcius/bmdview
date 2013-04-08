@@ -11,54 +11,9 @@
 
 #include "oglblock.h"
 
-void dumpSceneGraph(const BModel& bmd, const SceneGraph& n, bool showJoints, int d = 0)
-{
-  if(n.type == 0x10 && showJoints)
-  {
-    setTextColor3f(0.f, 1.f, .5f);
-    const Frame& f = bmd.jnt1.frames[n.index];
-    drawText("%s%d %d Joint: unk %d unk3 %d %s", std::string(d, ' ').c_str(), n.type,
-      n.index, f.unknown, f.unknown3, f.name.c_str());
-  }
-  else if(n.type == 0x11)
-  {
-    int flag = bmd.mat3.materials[bmd.mat3.indexToMatIndex[n.index]].flag;
-    setTextColor3f(0.f, .5f, 1.f);
-    drawText("%s%d %d Material: %s %d", std::string(d, ' ').c_str(), n.type,
-      n.index, bmd.mat3.stringtable[n.index].c_str(), flag);
-  }
-  else if(n.type == 0x12)
-  {
-    setTextColor3f(1.f, 1.f, .5f);
-    const Attributes& a = bmd.shp1.batches[n.index].attribs;
-    drawText("%s%d %d Geom: matrixType %d %s%s%s%s%s%s%s%s%s%s%s%s",
-      std::string(d, ' ').c_str(), n.type, n.index,
-      bmd.shp1.batches[n.index].matrixType,
-      a.hasColors[0]?"colors0 ":"",
-      a.hasColors[1]?"colors1 ":"",
-      a.hasNormals?"normals ":"",
-      a.hasTexCoords[0]?"texcoords0 ":"",
-      a.hasTexCoords[1]?"texcoords1 ":"",
-      a.hasTexCoords[2]?"texcoords2 ":"",
-      a.hasTexCoords[3]?"texcoords3 ":"",
-      a.hasTexCoords[4]?"texcoords4 ":"",
-      a.hasTexCoords[5]?"texcoords5 ":"",
-      a.hasTexCoords[6]?"texcoords6 ":"",
-      a.hasTexCoords[7]?"texcoords7 ":"",
-      a.hasMatrixIndices?"matrixindex ":""
-      );
-  }
-
-  for(size_t i = 0; i < n.children.size(); ++i)
-    dumpSceneGraph(bmd, n.children[i], showJoints, d + 1);
-}
-
-
 using namespace std;
 
 void drawCoordFrame();
-void drawString(const Vector3f& p, const char* s, ...);
-
 
 void drawBatch(BModel& bmd, int index, const Matrix44f& def);
 
@@ -161,8 +116,6 @@ void drawSkeleton(BModel& bmd, const SceneGraph& s, Matrix44f p = Matrix44f::IDE
     glEnd();
     glColor3f(1, 1, 1);
 
-    drawString(p*(f.t*.5f), "%d: %s", s.index, f.name.c_str());
-
     p = updateMatrix(f, p);
 
     /*
@@ -217,7 +170,7 @@ GLenum compareMode(u8 gxMode)
       break;
 
     default:
-      drawText("unknown compare mode %d", gxMode);
+      fprintf (stderr, "unknown compare mode %d\n", gxMode);
       return GL_ALWAYS;
   }
 }
@@ -280,7 +233,7 @@ void applyMaterial(int index, Model& m, const OglBlock& oglBlock)
         || ((ac.comp0 != ac.comp1 || ac.ref0 != ac.ref1) && (ac.comp1 != 3 || ac.ref1 != 255))
         )
       {
-        drawText("%s: AlphaCompare %d %d %d %d %d unsupported without shaders", name.c_str(), ac.comp0, ac.ref0, ac.alphaOp, ac.comp1, ac.ref1);
+        fprintf(stderr, "%s: AlphaCompare %d %d %d %d %d unsupported without shaders\n", name.c_str(), ac.comp0, ac.ref0, ac.alphaOp, ac.comp1, ac.ref1);
         glDisable(GL_ALPHA_TEST);
       }
       else
@@ -316,7 +269,7 @@ void applyMaterial(int index, Model& m, const OglBlock& oglBlock)
       //|| bi.srcFactor >= 6 || bi.dstFactor >= 6 //don't support destination alpha for now
       )
     {
-      drawText("%s: Unsupported BlendInfo %d %d %d %d",
+      fprintf(stderr, "%s: Unsupported BlendInfo %d %d %d %d\n",
         name.c_str(), bi.blendMode, bi.srcFactor, bi.dstFactor, bi.logicOp);
       glDisable(GL_BLEND);
     }
@@ -579,7 +532,7 @@ void drawBatch(BModel& bmd, int index, const Matrix44f& def)
 
   if(!currBatch.attribs.hasPositions)
   {
-    drawText("found batch without positions");
+    fprintf(stderr, "found batch without positions\n");
     return; //not visible
   }
 
@@ -634,7 +587,7 @@ void drawBatch(BModel& bmd, int index, const Matrix44f& def)
           glBegin(GL_TRIANGLE_FAN); break;
 
         default:
-          drawText("unknown primitive type %x", currPrimitive.type);
+          fprintf(stderr, "unknown primitive type %x\n", currPrimitive.type);
           continue;
       }
 
@@ -732,7 +685,7 @@ void drawBmd(Model& m, const SceneGraph& sg)
 {
   if(m.bmd == NULL)
   {
-    drawText("drawBmd(): Got NULL pointer!!!");
+    fprintf(stderr, "drawBmd(): Got NULL pointer!!!\n");
     return;
   }
 
@@ -740,8 +693,7 @@ void drawBmd(Model& m, const SceneGraph& sg)
 
   if(!hasShaderHardware())
   {
-    setTextColor3f(1.f, 0.f, 0.f);
-    drawText("Shaders are not supported by graphics card/driver");
+    fprintf(stderr, "Shaders are not supported by graphics card/driver\n");
   }
   
   if(!isKeyPressed('H'))
@@ -749,9 +701,6 @@ void drawBmd(Model& m, const SceneGraph& sg)
 
   if(hasShaderHardware())
     glUseProgramObjectARB(0);
-
-  if(isKeyPressed('T'))
-    dumpSceneGraph(bmd, sg, !isKeyPressed(0x10 /*VK_SHIFT*/));
 
   if(isKeyPressed('B'))
   {

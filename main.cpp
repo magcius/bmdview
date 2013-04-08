@@ -4,7 +4,6 @@
 #include "openfile.h"
 #include "bmdread.h"
 #include "drawbmd.h"
-#include "drawtext.h"
 #include "parameters.h"
 #include "camera.h"
 
@@ -20,21 +19,6 @@
 using namespace std;
 
 extern GLuint g_fontBase;
-
-void drawString(const Vector3f& p, const char* s, ...)
-{
-  va_list argList;
-  va_start(argList, s);
-  string str = format(s, argList);
-  va_end(argList);
-
-  glColor3f(0.f, 1.f, 0.f);
-  glRasterPos3fv((float*)&p);
-
-  for(size_t i = 0; i < str.size(); ++i)
-    glCallList(str[i] + g_fontBase);
-}
-
 
 void drawCoordFrame()
 {
@@ -66,26 +50,34 @@ void drawCoordFrame()
   glPopAttrib();
 }
 
+static char *
+_vasprintf (const char *format, va_list args)
+{
+  int size = vsnprintf(NULL, 0, format, args);
+  char *buf = (char *) malloc(size + 1);
+  buf[size - 1] = 0;
+  vsprintf(buf, format, args);
+  return buf;
+}
+
 void log(const char* msg, ...)
 {
   va_list argList;
   va_start(argList, msg);
-  string str = format(msg, argList);
+  char *str = _vasprintf(msg, argList);
   va_end(argList);
-
-  setTextColor3f(1, 1, 1);
-  addText("%s", str.c_str());
+  fprintf(stderr, "log: %s\n", str);
+  free(str);
 }
 
 void warn(const char* msg, ...)
 {
   va_list argList;
   va_start(argList, msg);
-  string str = format(msg, argList);
+  char *str = _vasprintf(msg, argList);
   va_end(argList);
-
-  setTextColor3f(1, 0, 0);
-  addText("%s", str.c_str());
+  fprintf(stderr, "warn: %s\n", str);
+  free(str);
 }
 
 string getExtension(const string& name)
@@ -126,8 +118,7 @@ void freeModel(Model& m)
 
 void loadFile(const string& name, bool merge = false)
 {
-  setTextColor3f(1.f, 1.f, 1.f);
-  addText("%s", name.c_str());
+  printf("loading %s", name.c_str());
 
   OpenedFile* f = openFile(name);
   if(f == NULL)
@@ -229,8 +220,6 @@ bool init()
 
   setStartupText("Ready.");
 
-  showFps();
-
   return true;
 }
 
@@ -247,38 +236,7 @@ void draw()
 
   GLenum error;
   while((error = glGetError()) != GL_NO_ERROR)
-    addText("GL error: %s", gluErrorString(error));
-
-  setTextColor3f(1.f, .5f, 1.f);
-  if(!isKeyPressed(BKEY_F1))
-    drawText("F1: show controls");
-  else
-  {
-    drawText("W: wireframe");
-    drawText("T: scene graph (with shift: hide joints)");
-    drawText("B: bones");
-    drawText("C: don't cull");
-    drawText("A: don't alphatest");
-    drawText("Q: don't blend");
-    drawText("E: color weighted vertices [green: multimatrix, red: weighted, white: normal]");
-    drawText("H: hide model (use with B)");
-    drawText("G: disable glsl shaders");
-    drawText("1: Show vertex colors only (ie, no textures)");
-    drawText("2: Ignore vertex colors");
-    drawText("9: Show batch bounding boxes");
-    drawText("0: Show joint bounding boxes");
-    drawText("X: disable billboard transforms");
-    drawText("F2: Show OpenGL info");
-  }
-
-  if(isKeyPressed(BKEY_F2))
-  {
-    setTextColor3f(.5f, 1.f, 1.f);
-    drawText("GL Vendor: %s", glGetString(GL_VENDOR));
-    drawText("GL Renderer: %s", glGetString(GL_RENDERER));
-    drawText("GL Version: %s", glGetString(GL_VERSION));
-    drawText("GL Extensions: %s", glGetString(GL_EXTENSIONS));
-  }
+    fprintf(stderr, "GL error: %s\n", gluErrorString(error));
 
   glPolygonMode(GL_FRONT_AND_BACK, isKeyPressed('W')?GL_LINE:GL_FILL);
 
@@ -294,7 +252,7 @@ void draw()
       if(m.bck != NULL)
       {
         if(m.bck->anims.size() != m.bmd->jnt1.frames.size())
-          drawText("number of joints in anim (%d) doesn't match number of joints of model (%d)",
+          warn("number of joints in anim (%d) doesn't match number of joints of model (%d)",
             m.bck->anims.size(), m.bmd->jnt1.frames.size());
         else
           animate(*m.bck, m.bmd->jnt1, animTime);
