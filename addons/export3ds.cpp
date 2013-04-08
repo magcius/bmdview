@@ -182,27 +182,6 @@ Lib3dsMesh* batchToMesh(const Batch& b, const BModel& bmd, const std::string& na
       float u = vtx.texCoords[0][curr.tex0Index].s;
       float v = vtx.texCoords[0][curr.tex0Index].t;
 
-      //3ds doesn't support texture mirroring - so we write
-      //mirrored textures ourselves. to compensate for this,
-      //we have to scale tex coords by .5f, though.
-      bool mirrorS = false, mirrorT = false;
-
-      const Material *mat = &bmd.mat3.materials[matIndex];
-      u16 stage = mat->texStages[0];
-      if(stage != 0xffff)
-      {
-        u16 v2 = bmd.mat3.texStageIndexToTextureIndex[stage];
-
-        mirrorS = bmd.tex1.imageHeaders[v2].wrapS == 2;
-        mirrorT = bmd.tex1.imageHeaders[v2].wrapT == 2;
-
-      }
-
-      if(mirrorS)
-        u *= .5f;
-      if(mirrorT)
-        v *= .5f;
-
       //store v flipped - 3ds max has v texcoord axis inverted
       mesh->texcos[i][0] = u;
       mesh->texcos[i][1] = 1.f - v;
@@ -361,13 +340,7 @@ Lib3dsMaterial* materialToMaterial(const BModel& bmd, const Material& mat,
         mat3ds->texture1_map.flags = 0; //tile textures
         break;
       case 2: //mirror
-        //3ds doesn't support a texcoord mirror clamp mode.
-        //the solution is to write the texture already
-        //mirrored, scale tex coords by 0.5f and to use
-        //a tiled texture in the 3ds file. thanks to
-        //lightning for this cool idea :-)
-
-        mat3ds->texture1_map.flags = 0; //tile (see above)
+        mat3ds->texture1_map.flags = LIB3DS_TEXTURE_MIRROR;
         break;
     }
 
@@ -432,22 +405,13 @@ void exportAs3ds(const BModel& bmd, const std::string& filename)
   size_t i;
 
   //export textures
-  typedef std::pair<Image*, std::pair<char, char> > MirroredImage;
-  std::map<MirroredImage, std::string> savedImages;
   std::vector<std::string> imageNames;
 
   for(i = 0; i < bmd.tex1.imageHeaders.size(); ++i)
   {
-    std::ostringstream nameStr;
-
-    char wrapSChar = bmd.tex1.imageHeaders[i].wrapS == 2 ? 'M':'S';
-    char wrapTChar = bmd.tex1.imageHeaders[i].wrapT == 2 ? 'M':'S';
-
-    //3ds files can only handle DOS filenames
-    //(no longer than 8.3 chars, no spaces)
-    nameStr << basename.substr(0, 4) << wrapSChar << wrapTChar
-            << std::setw(2) << std::setfill('0') << i;
-    std::string texName = nameStr.str();
+    char name[9] = { 0 }; // 8.3 format
+    snprintf(name, sizeof(name), "%.*s%02d", 6, basename.c_str(), i);
+    std::string texName = name;
 
     //replace spaces
     std::string::size_type pos = texName.find(' ');
@@ -457,17 +421,7 @@ void exportAs3ds(const BModel& bmd, const std::string& filename)
       pos = texName.find(' ', pos + 1);
     }
 
-    MirroredImage mi = std::make_pair(bmd.tex1.imageHeaders[i].data,
-                                      std::make_pair(wrapSChar, wrapTChar));
-    if(savedImages.count(mi) != 0)
-    {
-      imageNames.push_back(savedImages[mi] + ".tga");
-      continue;
-    }
-
-    savedImages[mi] = texName;
-    saveTexture(TGA, *bmd.tex1.imageHeaders[i].data, folder + texName,
-      wrapSChar == 'M', wrapTChar == 'M');
+    saveTexture(TGA, *bmd.tex1.imageHeaders[i].data, folder + texName);
     imageNames.push_back(texName + ".tga");
   }
 

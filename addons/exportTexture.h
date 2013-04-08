@@ -11,8 +11,7 @@ enum IMAGETYPE
 };
 
 void saveTexture(IMAGETYPE imgType, const Image& img,
-                 const std::string& filename, bool mirrorX = false,
-                 bool mirrorY = false);
+                 const std::string& filename);
 
 void exportTextures(IMAGETYPE imgType, const Tex1& tex,
                     const std::string& basename);
