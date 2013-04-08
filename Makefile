@@ -8,7 +8,7 @@ BASE_OBJS = glew.o bmdread.o openfile.o common.o drw1.o \
             vtx1.o transformtools.o addons/export3ds.o addons/exportTexture.o
 
 BMDVIEW2_OBJS = drawBmd.o main.o \
-       camera.o drawtext.o parameters.o textbox.o \
+       camera.o drawtext.o parameters.o \
        simple_gl_common.o oglblock.o ui.o simple_gl.o \
        addons/bck.o addons/btp.o $(BASE_OBJS)
 

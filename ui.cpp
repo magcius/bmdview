@@ -17,8 +17,6 @@
 #undef min
 #undef max
 
-#include "textbox.h"
-
 
 //TODO: this is ugly, do this somehow else
 void loadFile(const std::string& name, bool merge = false);
@@ -199,12 +197,7 @@ void menuDebugSectioninfo()
       writeBmdInfo(f, out);
       fclose(f);
 
-#ifdef _WIN32
-      TextBox(getHWnd(), out.str().c_str(), "Bmd sections",
-        MB_OK | TB_USEFIXEDFONT);
-#else
       std::cout << out.str();
-#endif
     }
   }
 }
