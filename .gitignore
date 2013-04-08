@@ -7,3 +7,4 @@
 *.3ds
 lib3ds*
 GL/
+glew.c
