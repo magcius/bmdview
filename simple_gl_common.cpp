@@ -58,29 +58,23 @@ void handleCamera()
 
   walkSpeed *= 128;
 
-  if(isKeyPressed(BKEY_LEFT))
+  if(isKeyPressed('A'))
     walkLeft(walkSpeed);
-  if(isKeyPressed(BKEY_RIGHT))
+  if(isKeyPressed('D'))
     walkRight(walkSpeed);
-    
-  if(isKeyPressed(BKEY_UP) && isKeyPressed(BKEY_ALT))
-    walkUp(walkSpeed);
-  else
-  {
-    if(isKeyPressed(BKEY_UP))
-      walkForward(walkSpeed);
-    if(isKeyPressed(BKEY_PG_UP))
+
+  if(isKeyPressed('W')) {
+    if (isKeyPressed(BKEY_ALT))
       walkUp(walkSpeed);
+    else
+      walkForward(walkSpeed);
   }
-  
-  if(isKeyPressed(BKEY_DOWN) && isKeyPressed(BKEY_ALT))
-    walkDown(walkSpeed);
-  else
-  {
-    if(isKeyPressed(BKEY_DOWN))
-      walkBack(walkSpeed);
-    if(isKeyPressed(BKEY_PG_DOWN))
+
+  if(isKeyPressed('S')) {
+    if (isKeyPressed(BKEY_ALT))
       walkDown(walkSpeed);
+    else
+      walkBack(walkSpeed);
   }
   
   float rotSpeed = g_rotSpeed*getLastFrameSeconds();
