@@ -220,46 +220,6 @@ void applyMaterial(int index, Model& m, const OglBlock& oglBlock)
   Material& mat = bmd.mat3.materials[bmd.mat3.indexToMatIndex[index]];
   string name = bmd.mat3.stringtable[index];
 
-
-  //alpha testing and blending
-  if(!isKeyPressed('A'))
-  {
-    //alpha test
-    if(!hasShaderHardware() || isKeyPressed('G'))
-    {
-      const AlphaCompare& ac = bmd.mat3.alphaCompares[mat.alphaCompIndex];
-
-      if((ac.alphaOp != 0 && ac.alphaOp != 1) //support only and and or for now
-        || ((ac.comp0 != ac.comp1 || ac.ref0 != ac.ref1) && (ac.comp1 != 3 || ac.ref1 != 255))
-        )
-      {
-        fprintf(stderr, "%s: AlphaCompare %d %d %d %d %d unsupported without shaders\n", name.c_str(), ac.comp0, ac.ref0, ac.alphaOp, ac.comp1, ac.ref1);
-        glDisable(GL_ALPHA_TEST);
-      }
-      else
-      {
-        GLfloat ref = ac.ref0/255.f;
-
-        if(ac.comp0 != 7)
-        {
-          glAlphaFunc(compareMode(ac.comp0), ref);
-          glEnable(GL_ALPHA_TEST);
-        }
-        else //GX_ALWAYS
-          glDisable(GL_ALPHA_TEST);
-      }
-    }
-    else
-      //done in fragment shader
-      glDisable(GL_ALPHA_TEST);
-
-    //glAlphaFunc(compareMode(4), .0f);
-    //glEnable(GL_ALPHA_TEST);
-  }
-  else
-    glDisable(GL_ALPHA_TEST);
-
-
   if(!isKeyPressed('Q'))
   {
     //blending
@@ -277,10 +237,6 @@ void applyMaterial(int index, Model& m, const OglBlock& oglBlock)
     {
       switch(bi.blendMode)
       {
-        //case 0: //none
-        //  glDisable(GL_BLEND);
-        //  break;
-
         case 0: //TODO: this should mean "don't blend", but links eyes don't
                 //work without this
         case 1: //blend
@@ -300,9 +256,7 @@ void applyMaterial(int index, Model& m, const OglBlock& oglBlock)
   else
     glDisable(GL_BLEND);
 
-
   //cull mode
-  if(!isKeyPressed('C'))
   switch(bmd.mat3.cullModes[mat.cullIndex])
   {
     case 0: //GX_CULL_NONE
@@ -319,65 +273,18 @@ void applyMaterial(int index, Model& m, const OglBlock& oglBlock)
       glCullFace(GL_BACK);
       break;
   }
-  else
-    glDisable(GL_CULL_FACE);
 
-  //z mode
-  if(!isKeyPressed('D'))
-  {
   if(bmd.mat3.zModes[mat.zModeIndex].enable)
     glEnable(GL_DEPTH_TEST);
   else
     glDisable(GL_DEPTH_TEST);
 
   glDepthFunc(compareMode(bmd.mat3.zModes[mat.zModeIndex].zFunc));
-  
   glDepthMask(bmd.mat3.zModes[mat.zModeIndex].enableUpdate);
-  }
-  else
-  {
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glDepthMask(GL_TRUE);
-  }
 
   //texture
-  if(!hasShaderHardware() || isKeyPressed('G') || isKeyPressed('E')
-    || isKeyPressed('1'))
-  {
-    //u16 stage = mat.texStages[m];
-    u16 stage = mat.texStages[0];
-
-    //glActiveTexture(GL_TEXTURE0 + m);
-    if(stage != 0xffff)
-    {
-      //glEnable(GL_TEXTURE_2D);
-
-      u16 v2 = bmd.mat3.texStageIndexToTextureIndex[stage];
-      glBindTexture(GL_TEXTURE_2D, bmd.tex1.imageHeaders[v2].data->texId);
-
-      //drawText("matindex = %d, texStage[0] = %d, v2 = %d", bmd.mat3.indexToMatIndex[n.index], stage, v2);
-
-      //check clamp modes:
-      setTexWrapMode(bmd.tex1.imageHeaders[v2].wrapS, bmd.tex1.imageHeaders[v2].wrapT);
-
-      //set minification and magnification filters
-      setFilters(bmd.tex1.imageHeaders[v2].magFilter,
-                 bmd.tex1.imageHeaders[v2].minFilter,
-                 bmd.tex1.imageHeaders[v2].data->mipmaps.size());
-    }
-    else
-    {
-      //glDisable(GL_TEXTURE_2D);
-    }
-
-  }
-  else
-  {
-    //bind glsl program
-    if(m.oglBlock != NULL)
-      setMaterial(index, *m.oglBlock, bmd);
-  }
+  if(m.oglBlock != NULL)
+    setMaterial(index, *m.oglBlock, bmd);
 }
 
 void drawScenegraph(Model& m, const SceneGraph& s, const Matrix44f& p = Matrix44f::IDENTITY, bool onDown = true, int matIndex = 0)
@@ -536,19 +443,10 @@ void drawBatch(BModel& bmd, int index, const Matrix44f& def)
     return; //not visible
   }
 
-  /*
-  if(currBatch.attribs.hasNormals)
-    glEnable(GL_LIGHTING);
-  else
-    glDisable(GL_LIGHTING);
-  //*/
-
   if(currBatch.attribs.hasTexCoords[0] && !isKeyPressed('E')
     && !isKeyPressed('1')) //vertex colors only
   {
     glEnable(GL_TEXTURE_2D);
-    //if(m > 0)
-    //  drawText("More than one texcoord set detected :-)");
   }
   else
   {
@@ -608,7 +506,6 @@ void drawBatch(BModel& bmd, int index, const Matrix44f& def)
 
         //multitexturing only supported via shaders
         if(!hasShaderHardware())
-        //if(true)
         {
           if(currBatch.attribs.hasTexCoords[0])
             glTexCoord2fv((float*)&bmd.vtx1.texCoords[0][currPrimitive.points[m].texCoordIndex[0]]);
@@ -619,25 +516,6 @@ void drawBatch(BModel& bmd, int index, const Matrix44f& def)
               glMultiTexCoord2fv(GL_TEXTURE0 + b,
                 (float*)&bmd.vtx1.texCoords[b][currPrimitive.points[m].texCoordIndex[b]]);
 
-        if(isKeyPressed('2')) //ignore vertex colors
-          glColor3f(1, 1, 1);
-
-        //*
-        if(isKeyPressed('E')) //color weighted vertices
-        {
-          if(currBatch.attribs.hasMatrixIndices)
-          {
-            if(isMatrixWeighted[currPrimitive.points[m].matrixIndex/3])
-              glColor3f(1.f, 0.f, 0);
-            else
-              glColor3f(0, 1.f, 0);
-          }
-          else
-            glColor3f(0, 1, 0);
-            //glColor3f(0, 0, 0);
-        }
-        //*/
-
         glVertex3fv((mat)*bmd.vtx1.positions[currPrimitive.points[m].posIndex]);
       }
 
@@ -645,77 +523,10 @@ void drawBatch(BModel& bmd, int index, const Matrix44f& def)
     }
   }
 
-
-  //draw normals (TODO: this could be waaay better,
-  //nearly 1-to-1 copy of the code above
-  if(!currBatch.attribs.hasNormals || !isKeyPressed('N'))
-    return;
-  for(j = 0; j < currBatch.packets.size(); ++j)
-  {
-    Packet& currPacket = currBatch.packets[j];
-
-    updateMatrixTable(bmd, currPacket, matrixTable);
-
-    Matrix44f mat = matrixTable[0];
-
-    for(size_t k = 0; k < currPacket.primitives.size(); ++k)
-    {
-      Primitive& currPrimitive = currPacket.primitives[k];
-
-      glBegin(GL_LINES); //draw normals
-      glColor3f(1, 1, 1);
-      for(size_t m = 0; m < currPrimitive.points.size(); ++m)
-      {
-        if(currBatch.attribs.hasMatrixIndices)
-          mat = matrixTable[currPrimitive.points[m].matrixIndex/3];
-
-        glVertex3fv((mat)*bmd.vtx1.positions[currPrimitive.points[m].posIndex]);
-        glVertex3fv(
-          (mat)*
-           (bmd.vtx1.positions[currPrimitive.points[m].posIndex]
-             + bmd.vtx1.normals[currPrimitive.points[m].normalIndex]*5)
-        );
-      }
-      glEnd();
-    }
-  }
 }
 
 void drawBmd(Model& m, const SceneGraph& sg)
 {
-  if(m.bmd == NULL)
-  {
-    fprintf(stderr, "drawBmd(): Got NULL pointer!!!\n");
-    return;
-  }
-
-  BModel& bmd = *m.bmd;
-
-  if(!hasShaderHardware())
-  {
-    fprintf(stderr, "Shaders are not supported by graphics card/driver\n");
-  }
-  
-  if(!isKeyPressed('H'))
-    drawScenegraph(m, sg);
-
-  if(hasShaderHardware())
-    glUseProgramObjectARB(0);
-
-  if(isKeyPressed('B'))
-  {
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_TEXTURE_2D); //skeleton might be invisible
-                              //if texture has alpha 0
-    drawSkeleton(bmd, sg);
-  }
-
-  /*
-  glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2f(0, 0); glVertex2f(-100, 100);
-    glTexCoord2f(0, 1); glVertex2f(-100, -100);
-    glTexCoord2f(1, 0); glVertex2f( 100, 100);
-    glTexCoord2f(1, 1); glVertex2f( 100, -100);
-  glEnd();
-  //*/
+  drawScenegraph(m, sg);
+  glUseProgramObjectARB(0);
 }
