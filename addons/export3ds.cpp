@@ -253,7 +253,7 @@ materialToMaterial(const BModel& bmd, const Material& mat,
 
 static void
 traverseSceneGraph(Lib3dsFile* file, const BModel& bmd, const SceneGraph& sg,
-                   Lib3dsNode *parent, int material)
+                   Lib3dsNode *&parent, int &material)
 {
   switch(sg.type)
   {
@@ -283,6 +283,14 @@ traverseSceneGraph(Lib3dsFile* file, const BModel& bmd, const SceneGraph& sg,
 
   for(size_t i = 0; i < sg.children.size(); ++i)
     traverseSceneGraph(file, bmd, sg.children[i], parent, material);
+}
+
+static void
+traverseSceneGraph(Lib3dsFile* file, const BModel& bmd, const SceneGraph& sg)
+{
+  int material = 0;
+  Lib3dsNode *parent = NULL;
+  traverseSceneGraph(file, bmd, sg, parent, material);
 }
 
 //exports a BModel to a .3ds file
@@ -331,7 +339,7 @@ void exportAs3ds(const BModel& bmd, const std::string& filename)
   //geometry
   SceneGraph sg;
   buildSceneGraph(bmd.inf1, sg);
-  traverseSceneGraph(file, bmd, sg, NULL, -1);
+  traverseSceneGraph(file, bmd, sg);
 
   lib3ds_file_save(file, filename.c_str());
   lib3ds_file_free(file);
