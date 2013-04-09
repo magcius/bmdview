@@ -227,10 +227,7 @@ void draw()
       if(m.btp != NULL)
         animate(*m.btp, m.bmd->mat3, animTime);
     }
-  
 
-    glColor3f(1, 1, 1);
-    glPointSize(5);
     if(m.bmd != NULL)
       drawBmd(m, m.sceneGraph);
   }
