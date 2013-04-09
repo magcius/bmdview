@@ -287,7 +287,7 @@ void applyMaterial(int index, Model& m, const OglBlock& oglBlock)
     setMaterial(index, *m.oglBlock, bmd);
 }
 
-void drawScenegraph(Model& m, const SceneGraph& s, const Matrix44f& p = Matrix44f::IDENTITY, bool onDown = true, int matIndex = 0)
+void drawScenegraph(Model& m, const SceneGraph& s, const Matrix44f& p = Matrix44f::IDENTITY, int matIndex = 0)
 {
   BModel& bmd = *m.bmd;
 
@@ -310,10 +310,8 @@ void drawScenegraph(Model& m, const SceneGraph& s, const Matrix44f& p = Matrix44
     //material
     //applyMaterial(s.index, bmd, *g_oglBlock);
     matIndex = s.index;
-
-    onDown = bmd.mat3.materials[bmd.mat3.indexToMatIndex[s.index]].flag == 1;
   }
-  else if(s.type == 0x12 && onDown)
+  else if(s.type == 0x12)
   {
     //geometry
 
@@ -324,15 +322,7 @@ void drawScenegraph(Model& m, const SceneGraph& s, const Matrix44f& p = Matrix44
   }
 
   for(size_t i = 0; i < s.children.size(); ++i)
-    drawScenegraph(m, s.children[i], effP, onDown, matIndex);
-
-  //*
-  if(s.type == 0x12 && !onDown)
-  {
-    applyMaterial(matIndex, m, *m.oglBlock);
-    drawBatch(bmd, s.index, effP);
-  }
-  //*/
+    drawScenegraph(m, s.children[i], effP, matIndex);
 }
 
 void adjustMatrix(Matrix44f& mat, u8 matrixType)
