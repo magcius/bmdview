@@ -363,7 +363,7 @@ materialToMaterial(const BModel& bmd, const Material& mat,
 
 static void
 traverseSceneGraph(Lib3dsFile* file, const BModel& bmd, const SceneGraph& sg,
-                   Lib3dsNode *parent, int currMatIndex)
+                   Lib3dsNode *parent, int material)
 {
   switch(sg.type)
   {
@@ -371,14 +371,14 @@ traverseSceneGraph(Lib3dsFile* file, const BModel& bmd, const SceneGraph& sg,
       // XXX - joints
       break;
     case 0x11: // material
-      currMatIndex = bmd.mat3.indexToMatIndex[sg.index];
+      material = bmd.mat3.indexToMatIndex[sg.index];
       break;
     case 0x12: // batch
       const Batch& currBatch = bmd.shp1.batches[sg.index];
       char buf[8] = { 0 };
       snprintf(buf, sizeof(buf)-1, "n%d", sg.index);
 
-      Lib3dsMesh* m = batchToMesh(currBatch, bmd, buf, currMatIndex);
+      Lib3dsMesh* m = batchToMesh(currBatch, bmd, buf, material);
 
       if(m != NULL)
       {
@@ -392,7 +392,7 @@ traverseSceneGraph(Lib3dsFile* file, const BModel& bmd, const SceneGraph& sg,
   }
 
   for(size_t i = 0; i < sg.children.size(); ++i)
-    traverseSceneGraph(file, bmd, sg.children[i], parent, currMatIndex);
+    traverseSceneGraph(file, bmd, sg.children[i], parent, material);
 }
 
 //exports a BModel to a .3ds file
