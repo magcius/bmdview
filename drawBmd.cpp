@@ -36,102 +36,9 @@ Matrix44f operator*(float f, const Matrix44f& m)
 
 Matrix44f updateMatrix(const Frame& f, Matrix44f effP)
 {
-  if(false) //f.unknown == 2)
-  {
-    //effP[3][0] = effP[3][1] = effP[3][2] = 0.f;
-    //effP[0][3] = effP[1][3] = effP[2][3] = 0.f;
-    /*
-    for(int j = 0; j < 3; ++j)
-      for(int k = 0; k < 3; ++k)
-        effP[j][k] = j == k ? 1.f : 0.f;
-    //*/
-
-    //*
-    Matrix44f ret = effP*frameMatrix(f);
-    for(int j = 0; j < 3; ++j)
-      for(int k = 0; k < 3; ++k)
-        ret[j][k] = frameMatrix(f)[j][k];
-        //ret[j][k] = j == k ? 1.f : 0.f;
-    return ret;
-    //*/
-  }
   return effP*frameMatrix(f);
 }
 
-
-void drawBox(Vector3f bbMin, Vector3f bbMax, const Matrix44f& mat)
-{
-  bbMin = bbMin;
-  bbMax = bbMax;
-
-  int i;
-  Vector3f d = bbMax - bbMin;
-  Vector3f verts[8];
-  verts[0] = bbMin;
-  verts[1] = bbMin + Vector3f(d.x(), 0, 0);
-  verts[2] = bbMin + Vector3f(d.x(), d.y(), 0);
-  verts[3] = bbMin + Vector3f(0, d.y(), 0);
-
-  verts[4] = bbMin + Vector3f(0, 0, d.z());
-  verts[5] = bbMin + Vector3f(d.x(), 0, d.z());
-  verts[6] = bbMin + Vector3f(d.x(), d.y(), d.z());
-  verts[7] = bbMin + Vector3f(0, d.y(), d.z());
-
-  for(i = 0; i < 8; ++i)
-    verts[i] = mat*verts[i];
-
-  //glColor3f(1, 0, 0);
-  glBegin(GL_LINE_LOOP);
-    for(i = 0; i < 4; ++i)
-      glVertex3fv(verts[i]);
-  glEnd();
-
-  //glColor3f(0, 1, 0);
-  glBegin(GL_LINES);
-    for(i = 0; i < 4; ++i)
-    {
-      glVertex3fv(verts[i]);
-      glVertex3fv(verts[i + 4]);
-    }
-  glEnd();
-
-  //glColor3f(0, 0, 1);
-  glBegin(GL_LINE_LOOP);
-    for(i = 0; i < 4; ++i)
-      glVertex3fv(verts[i + 4]);
-  glEnd();
-}
-
-void drawSkeleton(BModel& bmd, const SceneGraph& s, Matrix44f p = Matrix44f::IDENTITY)
-{
-  if(s.type == 0x10)
-  {
-    const Frame& f = bmd.jnt1.frames[s.index];
-
-    glBegin(GL_LINES);
-      glColor3f(1, 0, 0);
-      glVertex3fv(p*Vector3f(0, 0, 0));
-      glColor3f(0, 0, 1);
-      glVertex3fv(p*f.t);
-    glEnd();
-    glColor3f(1, 1, 1);
-
-    p = updateMatrix(f, p);
-
-    /*
-    //draw coord frames at joints
-    glPushMatrix();
-    prepareCamera();
-    glMultMatrixf(effP.transpose());
-    glScalef(100, 100, 100);
-    drawCoordFrame();
-    glPopMatrix();
-    //*/
-  }
-
-  for(size_t i = 0; i < s.children.size(); ++i)
-    drawSkeleton(bmd, s.children[i], p);
-}
 
 GLenum compareMode(u8 gxMode)
 {
@@ -297,11 +204,6 @@ void drawScenegraph(Model& m, const SceneGraph& s, const Matrix44f& p = Matrix44
   {
     //joint
     const Frame& f = bmd.jnt1.frames[s.index];
-
-    //this has to happen in the old frame (see butterflya.bmd)
-    if(isKeyPressed('0'))
-      drawBox(f.bbMin, f.bbMax, effP);
-
     bmd.jnt1.matrices[s.index] = updateMatrix(f, effP);
     effP = bmd.jnt1.matrices[s.index];
   }
@@ -419,13 +321,7 @@ void adjustMatrix(Matrix44f& mat, u8 matrixType)
 
 void drawBatch(BModel& bmd, int index, const Matrix44f& def)
 {
-  //if(index != 8 && index != 10) return;
-  //if(index != 3 && index != 27) return;
-
   Batch& currBatch = bmd.shp1.batches[index];
-
-  if(isKeyPressed('9'))
-      drawBox(currBatch.bbMin, currBatch.bbMax, def);
 
   if(!currBatch.attribs.hasPositions)
   {
@@ -454,7 +350,6 @@ void drawBatch(BModel& bmd, int index, const Matrix44f& def)
 
     //set up matrix table
     updateMatrixTable(bmd, currPacket, matrixTable, &isMatrixWeighted);
-    
 
     //if no matrix index is given per vertex, 0 is the default.
     //otherwise, mat is overwritten later.
@@ -494,17 +389,10 @@ void drawBatch(BModel& bmd, int index, const Matrix44f& def)
         if(currBatch.attribs.hasColors[0])
           glColor4ubv((GLubyte*)&bmd.vtx1.colors[0][currPrimitive.points[m].colorIndex[0]]);
 
-        //multitexturing only supported via shaders
-        if(!hasShaderHardware())
-        {
-          if(currBatch.attribs.hasTexCoords[0])
-            glTexCoord2fv((float*)&bmd.vtx1.texCoords[0][currPrimitive.points[m].texCoordIndex[0]]);
-        }
-        else
-          for(int b = 0; b < 8; ++b)
-            if(currBatch.attribs.hasTexCoords[b])
-              glMultiTexCoord2fv(GL_TEXTURE0 + b,
-                (float*)&bmd.vtx1.texCoords[b][currPrimitive.points[m].texCoordIndex[b]]);
+        for(int b = 0; b < 8; ++b)
+          if(currBatch.attribs.hasTexCoords[b])
+            glMultiTexCoord2fv(GL_TEXTURE0 + b,
+              (float*)&bmd.vtx1.texCoords[b][currPrimitive.points[m].texCoordIndex[b]]);
 
         glVertex3fv((mat)*bmd.vtx1.positions[currPrimitive.points[m].posIndex]);
       }
