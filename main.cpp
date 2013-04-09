@@ -20,36 +20,6 @@ using namespace std;
 
 extern GLuint g_fontBase;
 
-void drawCoordFrame()
-{
-  glPushAttrib(GL_ENABLE_BIT);
-  glDisable(GL_LIGHTING);
-  glDisable(GL_TEXTURE_2D);
-  glDisable(GL_FOG);
-  glDisable(GL_BLEND);
-
-  glBegin(GL_LINES);
-
-     // x-Achse
-     glColor3f(1.0f, 0.0f, 0.0f);
-     glVertex3f(0.0f, 0.0f, 0.0f);
-     glVertex3f(1.0f, 0.0f, 0.0f);
-
-     // y-Achse
-     glColor3f(0.0f, 1.0f, 0.0f);
-     glVertex3f(0.0f, 0.0f, 0.0f);
-     glVertex3f(0.0f, 1.0f, 0.0f);
-
-     // z-Achse
-     glColor3f(0.0f, 0.0f, 1.0f);
-     glVertex3f(0.0f, 0.0f, 0.0f);
-     glVertex3f(0.0f, 0.0f, 1.0f);
-
-  glEnd();
-
-  glPopAttrib();
-}
-
 static char *
 _vasprintf (const char *format, va_list args)
 {
@@ -232,13 +202,9 @@ void draw()
   glDepthMask(GL_TRUE); //if this was set to false, depth is not cleared...
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
- // drawCoordFrame();
-
   GLenum error;
   while((error = glGetError()) != GL_NO_ERROR)
     fprintf(stderr, "GL error: %s\n", gluErrorString(error));
-
-  glPolygonMode(GL_FRONT_AND_BACK, isKeyPressed('W')?GL_LINE:GL_FILL);
 
   for(size_t i = 0; i < g_models.size(); ++i)
   {
