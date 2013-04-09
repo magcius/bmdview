@@ -194,37 +194,35 @@ void applyMaterial(int index, Model& m, const OglBlock& oglBlock)
     setMaterial(index, *m.oglBlock, bmd);
 }
 
-void drawScenegraph(Model& m, const SceneGraph& s, const Matrix44f& p = Matrix44f::IDENTITY, int matIndex = 0)
+static void
+drawSceneGraph(Model& m, const SceneGraph& sg,
+               const Matrix44f& p = Matrix44f::IDENTITY,
+               int matIndex = 0)
 {
   BModel& bmd = *m.bmd;
 
   Matrix44f effP = p;
 
-  if(s.type == 0x10)
+  switch(sg.type)
   {
-    //joint
-    const Frame& f = bmd.jnt1.frames[s.index];
-    bmd.jnt1.matrices[s.index] = updateMatrix(f, effP);
-    effP = bmd.jnt1.matrices[s.index];
-  }
-  else if(s.type == 0x11)
-  {
-    //material
-    //applyMaterial(s.index, bmd, *g_oglBlock);
-    matIndex = s.index;
-  }
-  else if(s.type == 0x12)
-  {
-    //geometry
-
-    //TODO: it's not sure that all matrices required by this call
-    //are already calculated...
-    applyMaterial(matIndex, m, *m.oglBlock);
-    drawBatch(bmd, s.index, effP);
+    case 0x10: // joint
+      {
+        const Frame& f = bmd.jnt1.frames[sg.index];
+        bmd.jnt1.matrices[sg.index] = updateMatrix(f, effP);
+        effP = bmd.jnt1.matrices[sg.index];
+      }
+      break;
+    case 0x11: // material
+      matIndex = bmd.mat3.indexToMatIndex[sg.index];
+      break;
+    case 0x12: // batch
+      applyMaterial(matIndex, m, *m.oglBlock);
+      drawBatch(bmd, sg.index, effP);
+      break;
   }
 
-  for(size_t i = 0; i < s.children.size(); ++i)
-    drawScenegraph(m, s.children[i], effP, matIndex);
+  for(size_t i = 0; i < sg.children.size(); ++i)
+    drawSceneGraph(m, sg.children[i], effP, matIndex);
 }
 
 void adjustMatrix(Matrix44f& mat, u8 matrixType)
@@ -405,6 +403,6 @@ void drawBatch(BModel& bmd, int index, const Matrix44f& def)
 
 void drawBmd(Model& m, const SceneGraph& sg)
 {
-  drawScenegraph(m, sg);
+  drawSceneGraph(m, sg);
   glUseProgramObjectARB(0);
 }
