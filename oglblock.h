@@ -9,7 +9,6 @@
 
 #include "bmdread.h"
 
-bool hasShaderHardware();
 void setTexWrapMode(u8 sMode, u8 tMode);
 
 struct OglMaterial

@@ -95,19 +95,6 @@ void setTexWrapMode(u8 sMode, u8 tMode)
   setTexWrapModeST(GL_TEXTURE_WRAP_T, tMode);
 }
 
-
-bool hasShaderHardware()
-{
-  /*
-  //debug code
-  glShaderSourceARB = NULL;
-  return false;
-  //*/
-
-  return GLEW_ARB_fragment_shader && GLEW_ARB_vertex_shader
-    && GLEW_ARB_shader_objects && GLEW_ARB_shading_language_100;
-}
-
 std::string getLog(GLhandleARB p)
 {
   GLint len;
@@ -1008,9 +995,6 @@ void saveShaderStrings(OglBlock& block, const std::string& baseName)
 
 void compileShaderStrings(OglBlock& block)
 {
-  if(!hasShaderHardware())
-    return;
-
   freeOglBlockShaders(block); //free old shaders
 
   for(size_t i = 0; i < block.materials.size(); ++i)
@@ -1068,9 +1052,6 @@ void freeOglBlock(OglBlock*& oglBlock)
 
 void setMaterial(int index, const OglBlock& block, const BModel& bmd)
 {
-  if(!hasShaderHardware())
-    return;
-
   int m2 = bmd.mat3.indexToMatIndex[index];
   const Material& currMat = bmd.mat3.materials[m2];
 
