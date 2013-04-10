@@ -1,25 +1,10 @@
 #include "oglblock.h"
 
-#include "simple_gl.h" //TODO: remove this (needed for isKeyPressed())
-
 #include <sstream>
 #include <fstream>
 
-void freeOglBlockShaders(OglBlock& oglBlock);
-void compileShaderStrings(OglBlock& block);
-
-int log2(int i)
-{
-  int a = 0, b = 1;
-  while(b < i)
-  {
-    b *= 2;
-    ++a;
-  }
-  return a;
-}
-
-GLenum texFilter(u8 filter)
+static GLenum
+texFilter(u8 filter)
 {
   switch(filter)
   {
@@ -47,7 +32,8 @@ GLenum texFilter(u8 filter)
   }
 }
 
-void setFilters(int magFilter, int minFilter, int mipCount)
+static void
+setFilters(int magFilter, int minFilter, int mipCount)
 {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
                   texFilter(magFilter));
@@ -73,7 +59,8 @@ void setFilters(int magFilter, int minFilter, int mipCount)
   }
 }
 
-void setTexWrapModeST(GLenum wrapST, u8 mode)
+static void
+setTexWrapModeST(GLenum wrapST, u8 mode)
 {
   switch(mode)
   {
@@ -89,13 +76,15 @@ void setTexWrapModeST(GLenum wrapST, u8 mode)
   }
 }
 
-void setTexWrapMode(u8 sMode, u8 tMode)
+static void
+setTexWrapMode(u8 sMode, u8 tMode)
 {
   setTexWrapModeST(GL_TEXTURE_WRAP_S, sMode);
   setTexWrapModeST(GL_TEXTURE_WRAP_T, tMode);
 }
 
-std::string getLog(GLhandleARB p)
+static std::string
+getLog(GLhandleARB p)
 {
   GLint len;
   std::string ret;
@@ -108,37 +97,12 @@ std::string getLog(GLhandleARB p)
   return ret;
 }
 
-std::string loadFile(const std::string& fileName)
-{
-  std::ifstream in(fileName.c_str());
-  std::string ret, str;
-  while(std::getline(in, str))
-    ret += str + '\n';
-  return ret;
-}
-
-void saveFile(const std::string& fileName, const std::string& str)
-{
-  std::ofstream out(fileName.c_str());
-  out << str;
-}
-
-//void writeTexGen(std::ostream& out, const TexGenInfo& texGen, int i)
-void writeTexGen(std::ostream& out, const TexGenInfo& texGen, int i, const Material& currMat, const Mat3& mat)
+static void
+writeTexGen(std::ostream& out, const TexGenInfo& texGen, int i, const Material& currMat, const Mat3& mat)
 {
   out << std::hex << "\n  //GX_SetTexCoordGen(0x" << i << ", 0x"
     << (int)texGen.texGenType << ", 0x" << (int)texGen.texGenSrc << ", 0x"
     << (int)texGen.matrix << "):\n" << std::dec;
-
-  /*
-  if(texGen.texGenType == 0xa)
-  {
-    out << "  const mat4 sphereMap = mat4(0.5, 0.0, 0.0, 0.5,\n"
-        << "                              0.0, -.5, 0.0, -.5,\n"
-        << "                              0.0, 0.0, 0.0, 0.0,\n"
-        << "                              0.0, 0.0, 0.0, 1.0);\n";
-  }
-  //*/
 
   std::ostringstream tempOut;
   tempOut << "gl_TexCoord[" << i << "]";
@@ -175,11 +139,6 @@ void writeTexGen(std::ostream& out, const TexGenInfo& texGen, int i, const Mater
       out << "vec4(0.0, 0.0, 0.0, 0.0); //(unsupported)\n";
     }
 
-
-    
-    //dirty hack (doesn't work with animations for example) (TODO):
-    //*
-    //try if texcoord scaling is where i think it is
     if(currMat.texMtxInfos[i] != 0xffff)
     {
       const TexMtxInfo& tmi = mat.texMtxInfos[currMat.texMtxInfos[i]];
@@ -187,7 +146,6 @@ void writeTexGen(std::ostream& out, const TexGenInfo& texGen, int i, const Mater
       out << "  " << dest << ".st += vec2(" << tmi.scaleCenterX*(1 - tmi.scaleU)
                           << ", " << tmi.scaleCenterY*(1 - tmi.scaleV) << ");\n";
     }
-    //*/
   }
   else if(texGen.texGenType == 0xa)
   {
@@ -197,20 +155,6 @@ void writeTexGen(std::ostream& out, const TexGenInfo& texGen, int i, const Mater
       warn("writeTexGen() type 0xa: unexpected src 0x%x", texGen.texGenSrc);
 
     log("writeTexGen(): Found type 0xa (SRTG), doesn't work right yet");
-
-    //t << "sphereMap*vec4(gl_NormalMatrix*gl_Normal, 1.0)";
-
-    /*
-    out << "  vec3 u = normalize(gl_Position.xyz);\n";
-    out << "  vec3 refl = u - 2.0*dot(gl_Normal, u)*gl_Normal;\n";
-    out << "  refl.z += 1.0;\n";
-    out << "  float m = .5*inversesqrt(dot(refl, refl));\n";
-    out << "  " << dest << ".st = vec2(refl.x*m + .5, refl.y*m + .5);";
-    /*/
-    //out << "  " << dest << " = gl_MultiTexCoord0; //(unsupported)\n";
-    //out << "  " << dest << " = vec4(0.0, 0.0, 0.0, 0.0); //(unsupported)\n";
-    out << "  " << dest << " = color; //(not sure...)\n";
-    //*/
   }
   else
   {
@@ -288,14 +232,12 @@ std::string createVertexShaderString(int index, const Mat3& mat)
     writeTexGen(out, mat.texGenInfos[currMat.texGenInfos[i]], i, currMat, mat);
   out << "\n\n";
 
-
-
-
   out << "}\n";
   return out.str();
 }
 
-std::string getRegIdName(u8 id)
+static std::string
+getRegIdName(u8 id)
 {
   std::ostringstream out;
   if(id == 0)
@@ -305,15 +247,17 @@ std::string getRegIdName(u8 id)
   return out.str();
 }
 
-std::string getTexAccess(const TevOrderInfo& info)
+static std::string
+getTexAccess(const TevOrderInfo& info)
 {
   std::ostringstream out;
-  out << "texture2D(texture" << (int)info.texMap
-      << ", gl_TexCoord[" << (int)info.texCoordId << "].st)";
+  out << "texture2D(texture[" << (int)info.texMap << "], "
+      << "gl_TexCoord[" << (int)info.texCoordId << "].st)";
   return out.str();
 }
 
-std::string getRasColor(const TevOrderInfo& info)
+static std::string
+getRasColor(const TevOrderInfo& info)
 {
   //TODO:
   return "gl_Color";
@@ -343,7 +287,8 @@ std::string getRasColor(const TevOrderInfo& info)
   }
 }
 
-std::string getColorIn(u8 op, u8 konst, const TevOrderInfo& info)
+static std::string
+getColorIn(u8 op, u8 konst, const TevOrderInfo& info)
 {
   const char* suffix[2] = { ".rgb", ".aaa" };
 
@@ -396,7 +341,8 @@ std::string getColorIn(u8 op, u8 konst, const TevOrderInfo& info)
   }
 }
 
-std::string getAlphaIn(u8 op, u8 konst, const TevOrderInfo& info)
+static std::string
+getAlphaIn(u8 op, u8 konst, const TevOrderInfo& info)
 {
   if(op <= 3)
     return getRegIdName(op) + ".a";
@@ -440,7 +386,8 @@ std::string getAlphaIn(u8 op, u8 konst, const TevOrderInfo& info)
   }
 }
 
-std::string getMods(const std::string& dest, u8 bias, u8 scale, u8 clamp, int type)
+static std::string
+getMods(const std::string& dest, u8 bias, u8 scale, u8 clamp, int type)
 {
   std::ostringstream out;
 
@@ -488,7 +435,8 @@ std::string getMods(const std::string& dest, u8 bias, u8 scale, u8 clamp, int ty
   return out.str();
 }
 
-std::string getOp(u8 op, u8 bias, u8 scale, u8 clamp, u8 regId, std::string ins[4], int type)
+static std::string
+getOp(u8 op, u8 bias, u8 scale, u8 clamp, u8 regId, std::string ins[4], int type)
 {
   const char* suffix0[2] = { ".rgb", ".a" };
 
@@ -612,7 +560,8 @@ std::string getOp(u8 op, u8 bias, u8 scale, u8 clamp, u8 regId, std::string ins[
   return out.str();
 }
 
-std::string getAlphaCompare(int comp, int ref)
+static std::string
+getAlphaCompare(int comp, int ref)
 {
   //ATI cards can't even handle constant bools if we use any() and all(),
   //so for now use complicated expressions for true and false
@@ -653,7 +602,8 @@ std::string getAlphaCompare(int comp, int ref)
   return out.str();
 }
 
-std::string createFragmentShaderString(int index, const Mat3& mat)
+static std::string
+createFragmentShaderString(int index, const Mat3& mat)
 {
   const Material& currMat = mat.materials[index];
   std::ostringstream out;
@@ -661,32 +611,12 @@ std::string createFragmentShaderString(int index, const Mat3& mat)
   out.setf(std::ios::showpoint);
   int i;
 
-  out << "//TODO: swap mode, indirect texturing, lod select, alpha testing (?)\n";
 
-
-  //dump names of this stage info block
-  out << "//Names: ";
-  for(size_t m = 0; m < mat.indexToMatIndex.size(); ++m)
-    if(mat.indexToMatIndex[m] == index)
-      out << mat.stringtable[m] << " ";
-  out << "\n\n";
-
-
-  for(i = 0; i < 8; ++i)
-    if(currMat.texStages[i] != 0xffff)
-      out << "uniform sampler2D texture" << i << "; //"
-          << currMat.texStages[i] << " -> "
-          << mat.texStageIndexToTextureIndex[currMat.texStages[i]] << "\n";
-  out << "\n";
-
-
-
+  out << "uniform sampler2D texture[8];\n";
   out << "void main()\n{\n";
-
   out << "  const vec4 ONE = vec4(1.0, 1.0, 1.0, 1.0);\n\n";
 
   //check which constant colors are used, write these:
-  out << "  //konst colors\n";
   bool needK[4] = { false, false, false, false };
   for(i = 0; i < mat.tevCounts[currMat.tevCountIndex]; ++i)
   {
@@ -876,7 +806,8 @@ std::string createFragmentShaderString(int index, const Mat3& mat)
 }
 
 
-GLhandleARB createShader(const std::string& sourceString, GLenum target)
+static GLhandleARB
+createShader(const std::string& sourceString, GLenum target)
 {
   GLhandleARB ret = glCreateShaderObjectARB(target);
 
@@ -895,7 +826,8 @@ GLhandleARB createShader(const std::string& sourceString, GLenum target)
   return ret;
 }
 
-GLhandleARB createProgram(GLhandleARB& vertex, GLhandleARB& fragment)
+static GLhandleARB
+createProgram(GLhandleARB& vertex, GLhandleARB& fragment)
 {
   if(vertex == 0 || fragment == 0)
   {
@@ -929,95 +861,8 @@ GLhandleARB createProgram(GLhandleARB& vertex, GLhandleARB& fragment)
   return program;
 }
 
-std::string getVertexShaderName(const std::string& baseName, int i)
-{
-  std::ostringstream out;
-  out << baseName << "_vert_" << i << ".txt";
-  return out.str();
-}
-
-std::string getFragmentShaderName(const std::string& baseName, int i)
-{
-  std::ostringstream out;
-  out << baseName << "_frag_" << i << ".txt";
-  return out.str();
-}
-
-void generateShaderStrings(OglBlock& block, const Mat3& mat)
-{
-  block.materials.resize(mat.materials.size());
-  for(unsigned int i = 0; i < mat.materials.size(); ++i)
-  {
-    OglMaterial& oglMat = block.materials[i];
-
-    oglMat.vertexShader = 0;
-    oglMat.fragmentShader = 0;
-    oglMat.glslProgram = 0;
-
-    oglMat.vertexShaderString = createVertexShaderString(i, mat);
-    oglMat.fragmentShaderString = createFragmentShaderString(i, mat);
-  }
-
-  compileShaderStrings(block);
-}
-
-void loadShaderStrings(OglBlock& block, const std::string& baseName)
-{
-  for(size_t i = 0; i < block.materials.size(); ++i)
-  {
-    OglMaterial& oglMat = block.materials[i];
-
-    std::string vertName = getVertexShaderName(baseName, i);
-    if(doesFileExist(vertName))
-      oglMat.vertexShaderString = loadFile(vertName);
-
-    std::string fragName = getFragmentShaderName(baseName, i);
-    if(doesFileExist(fragName))
-      oglMat.fragmentShaderString = loadFile(fragName);
-  }
-
-  compileShaderStrings(block);
-}
-
-void saveShaderStrings(OglBlock& block, const std::string& baseName)
-{
-  for(size_t i = 0; i < block.materials.size(); ++i)
-  {
-    OglMaterial& oglMat = block.materials[i];
-
-    std::string vertName = getVertexShaderName(baseName, i);
-    saveFile(vertName, oglMat.vertexShaderString);
-
-    std::string fragName = getFragmentShaderName(baseName, i);
-    saveFile(fragName, oglMat.fragmentShaderString);
-  }
-}
-
-void compileShaderStrings(OglBlock& block)
-{
-  freeOglBlockShaders(block); //free old shaders
-
-  for(size_t i = 0; i < block.materials.size(); ++i)
-  {
-    OglMaterial& oglMat = block.materials[i];
-    oglMat.vertexShader = createShader(oglMat.vertexShaderString, GL_VERTEX_SHADER_ARB);
-    oglMat.fragmentShader = createShader(oglMat.fragmentShaderString, GL_FRAGMENT_SHADER_ARB);
-    oglMat.glslProgram = createProgram(oglMat.vertexShader, oglMat.fragmentShader);
-  }
-}
-
-OglBlock* createOglBlock(const Mat3& mat, const std::string& baseName)
-{
-  warn("Mat supports still lacks texmatrix support, ind tex blocks, color chans and color swap support");
-
-  OglBlock* block = new OglBlock;
-
-  generateShaderStrings(*block, mat);
-
-  return block;
-}
-
-void freeOglBlockShaders(OglBlock& oglBlock)
+static void
+freeOglBlockShaders(OglBlock& oglBlock)
 {
   //TODO: check if program is currently bound, unbind it...(?)
   for(size_t i = 0; i < oglBlock.materials.size(); ++i)
@@ -1035,6 +880,51 @@ void freeOglBlockShaders(OglBlock& oglBlock)
   }
 }
 
+
+static void
+compileShaderStrings(OglBlock& block)
+{
+  freeOglBlockShaders(block); //free old shaders
+
+  for(size_t i = 0; i < block.materials.size(); ++i)
+  {
+    OglMaterial& oglMat = block.materials[i];
+    oglMat.vertexShader = createShader(oglMat.vertexShaderString, GL_VERTEX_SHADER_ARB);
+    oglMat.fragmentShader = createShader(oglMat.fragmentShaderString, GL_FRAGMENT_SHADER_ARB);
+    oglMat.glslProgram = createProgram(oglMat.vertexShader, oglMat.fragmentShader);
+  }
+}
+
+static void
+generateShaderStrings(OglBlock& block, const Mat3& mat)
+{
+  block.materials.resize(mat.materials.size());
+  for(unsigned int i = 0; i < mat.materials.size(); ++i)
+  {
+    OglMaterial& oglMat = block.materials[i];
+
+    oglMat.vertexShader = 0;
+    oglMat.fragmentShader = 0;
+    oglMat.glslProgram = 0;
+
+    oglMat.vertexShaderString = createVertexShaderString(i, mat);
+    oglMat.fragmentShaderString = createFragmentShaderString(i, mat);
+  }
+
+  compileShaderStrings(block);
+}
+
+OglBlock* createOglBlock(const Mat3& mat, const std::string& baseName)
+{
+  warn("Mat supports still lacks texmatrix support, ind tex blocks, color chans and color swap support");
+
+  OglBlock* block = new OglBlock;
+
+  generateShaderStrings(*block, mat);
+
+  return block;
+}
+
 void freeOglBlock(OglBlock*& oglBlock)
 {
   if(oglBlock == NULL)
@@ -1045,10 +935,6 @@ void freeOglBlock(OglBlock*& oglBlock)
   delete oglBlock;
   oglBlock = NULL;
 }
-
-
-
-
 
 void setMaterial(int index, const OglBlock& block, const BModel& bmd)
 {

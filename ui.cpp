@@ -165,26 +165,6 @@ void menuFileExportTextures(const std::string& filename)
          filename.c_str());
 }
 
-void menuFileExportShaders()
-{
-  if(g_models.back().oglBlock != NULL)
-    saveShaderStrings(*g_models.back().oglBlock, g_models.back().bmdFileName);
-}
-
-void menuFileReimportShaders()
-{
-  if(g_models.back().oglBlock != NULL)
-    loadShaderStrings(*g_models.back().oglBlock, g_models.back().bmdFileName);
-}
-
-void menuFileRegenerateShaders()
-{
-  if(g_models.back().oglBlock != NULL)
-    generateShaderStrings(*g_models.back().oglBlock,
-      g_models.back().bmd->mat3);
-}
-
-
 void menuDebugSectioninfo()
 {
   if(g_models.back().oglBlock != NULL) //model loaded?

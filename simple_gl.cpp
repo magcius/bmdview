@@ -393,18 +393,6 @@ LRESULT CALLBACK eventListener(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
           menuFileExportTextures();
           break;
 
-        case MENU_FILE_EXPORT_SHADERS:
-          menuFileExportShaders();
-          break;
-
-        case MENU_FILE_REIMPORT_SHADERS:
-          menuFileReimportShaders();
-          break;
-
-        case MENU_FILE_REGENERATE_SHADERS:
-          menuFileRegenerateShaders();
-          break;
-
         case MENU_FILE_EXIT:
           PostQuitMessage(0);
           break;
