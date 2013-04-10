@@ -706,20 +706,6 @@ createFragmentShaderString(int index, const Mat3& mat)
         << (int)order.texCoordId << ", 0x" << (int)order.texMap << ", 0x"
         << (int)order.chanId << ")\n";
 
-    //kcolorsel, color in, color op
-    /*
-    out << "\n  //GX_SetTevKColorSel(0x" << i
-        << ", 0x" << (int)currMat.constColorSel[i] << ")\n";
-    out << "  //GX_SetTevColorIn(0x" << i
-        << ", 0x" << (int)stage.colorIn[0] << ", 0x" << (int)stage.colorIn[1]
-        << ", 0x" << (int)stage.colorIn[2] << ", 0x" << (int)stage.colorIn[3]
-        << ")\n";
-    out << "  //GX_SetTevColorOp(0x" << i
-        << ", 0x" << (int)stage.colorOp << ", 0x" << (int)stage.colorBias
-        << ", 0x" << (int)stage.colorScale << ", 0x" << (int)stage.colorClamp
-        << ", 0x" << (int)stage.colorRegId << ")\n";
-    //*/
-
     std::string colorIns[4];
     colorIns[0] = getColorIn(stage.colorIn[0], currMat.constColorSel[i], order);
     colorIns[1] = getColorIn(stage.colorIn[1], currMat.constColorSel[i], order);
@@ -728,20 +714,6 @@ createFragmentShaderString(int index, const Mat3& mat)
 
     out << getOp(stage.colorOp, stage.colorBias, stage.colorScale,
       stage.colorClamp, stage.colorRegId, colorIns, 0) << "\n";
-
-    //kalphasel, alpha in, alpha op
-    /*
-    out << "\n  //GX_SetTevKAlphaSel(0x" << i
-        << ", 0x" << (int)currMat.constAlphaSel[i] << ")\n";
-    out << "  //GX_SetTevAlphaIn(0x" << i
-        << ", 0x" << (int)stage.alphaIn[0] << ", 0x" << (int)stage.alphaIn[1]
-        << ", 0x" << (int)stage.alphaIn[2] << ", 0x" << (int)stage.alphaIn[3]
-        << ")\n";
-    out << "  //GX_SetTevAlphaOp(0x" << i
-        << ", 0x" << (int)stage.alphaOp << ", 0x" << (int)stage.alphaBias
-        << ", 0x" << (int)stage.alphaScale << ", 0x" << (int)stage.alphaClamp
-        << ", 0x" << (int)stage.alphaRegId << ")\n";
-    //*/
 
     std::string alphaIns[4];
     alphaIns[0] = getAlphaIn(stage.alphaIn[0], currMat.constAlphaSel[i], order);
@@ -755,14 +727,6 @@ createFragmentShaderString(int index, const Mat3& mat)
     out << std::dec;
   }
   out << "\n\n";
-
-  /*
-  if(mat.texCounts[currMat.texCountIndex] == 0)
-    out << "  gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);\n";
-  else
-    out << "  gl_FragColor = texture2D(texture0, gl_TexCoord[0].st);\n";
-  //*/
-
 
   //do alpha testing in shader, because normal opengl alpha testing
   //can't handle logical ops
