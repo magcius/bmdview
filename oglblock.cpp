@@ -394,38 +394,23 @@ getMods(const std::string& dest, u8 bias, u8 scale, u8 clamp, int type)
   const char* biasStr[3][2] = {
     { "", "" },
     { "+ 0.5*ONE.rgb", "+ 0.5" },
-    { " - 0.5*ONE.rgb", " - 0.5"}
+    { "- 0.5*ONE.rgb", "- 0.5" }
   };
 
-  switch(bias)
-  {
-    case 0: break;
-
-    case 1:
-    case 2:
-      out << "  " << dest << " = " << dest << biasStr[bias][type] << ";\n";
-      break;
-
-    default:
-      warn("getMods(): unknown bias %d", bias);
+  if (bias < 3) {
+    out << "  " << dest << " = " << dest << biasStr[bias][type] << ";\n";
+  } else {
+    warn("getMods(): unknown bias %d", bias);
   }
 
   const char* scaleStr[4] = { "1.0", "2.0", "4.0", "0.5" };
-  switch(scale)
-  {
-    case 0: break;
-    case 1:
-    case 2:
-    case 3:
-      out << "  " << dest << " *= " << scaleStr[scale] << ";\n";
-      break;
-
-    default:
-      warn("getMods(): unknown scale %d", scale);
+  if (scale < 4) {
+    out << "  " << dest << " *= " << scaleStr[scale] << ";\n";
+  } else {
+    warn("getMods(): unknown scale %d", scale);
   }
 
-  if(clamp)
-  {
+  if(clamp) {
     if(type == 0)
       out << "  " << dest << " = clamp(" << dest << ", vec3(0.0, 0.0, 0.0), ONE.rgb);\n";
     else
@@ -459,7 +444,7 @@ getOp(u8 op, u8 bias, u8 scale, u8 clamp, u8 regId, std::string ins[4], int type
         out << " - ";
         log("getOp(): op 1 might not work");
       }
-       
+
       out << ins[3] << ";\n";
 
       if(op == 1)
@@ -523,7 +508,6 @@ getOp(u8 op, u8 bias, u8 scale, u8 clamp, u8 regId, std::string ins[4], int type
         out << ")\n    " << dest << " = " << ins[2] << ";\n"
             << "  else\n    " << dest << " = " << ins[3] << ";\n";
 
-        //out << getMods(dest, 0, scale, clamp, type);
         if(bias != 3 || scale != 1 || clamp != 1)
           warn("getOp() comp0: unexpected bias %d, scale %d, clamp %d", bias, scale, clamp);
 
@@ -542,7 +526,6 @@ getOp(u8 op, u8 bias, u8 scale, u8 clamp, u8 regId, std::string ins[4], int type
         out << ins[1] << ")\n    " << dest << " = " << ins[2] << ";\n"
             << "  else\n    " << dest << " = " << ins[3] << ";\n";
 
-        //out << getMods(dest, 0, scale, clamp, type);
         if(bias != 3 || scale != 1 || clamp != 1)
           warn("getOp() comp0: unexpected bias %d, scale %d, clamp %d", bias, scale, clamp);
 
