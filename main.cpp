@@ -116,12 +116,9 @@ void loadFile(const string& name, bool merge = false)
     {
       g_models.back().bmdFileName = name;
 
-      setStartupText("Creating OpenGL block (mainly shaders)...");
       uploadImagesToGl(g_models.back().bmd->tex1);
-      
+     
       g_models.back().oglBlock = createOglBlock(g_models.back().bmd->mat3, name);
-
-      setStartupText("Building Scenegraph...");
       g_models.back().sceneGraph.children.clear();
       buildSceneGraph(g_models.back().bmd->inf1, g_models.back().sceneGraph);
 
@@ -131,30 +128,8 @@ void loadFile(const string& name, bool merge = false)
       //the last frame are used to draw the next frame
       //(it's even uglier: a mixture of this frame's and
       //last frame's matrices are used right now -> TODO)
-      setStartupText("Setting up matrices...");
       drawBmd(g_models.back(), g_models.back().sceneGraph);
     }
-
-
-    //debugging stuff:
-
-    //if(g_model != NULL)
-      //saveAsOff(name + ".off", *g_model);
-
-    //if(g_model != NULL)
-    //  exportAsX(*g_model, name + ".x");
-
-	//if(g_model != NULL)
-    //  exportAs3ds(*g_model, name + ".3ds");
-
-    /*
-    if(g_model != NULL)
-    {
-      for(int i = 0; i < g_model->tex1.imageHeaders.size(); ++i)
-        saveTexture(DDS, g_model->tex1.imageHeaders[i].name,
-                    *g_model->tex1.imageHeaders[i].data);
-    }
-    */
   }
   else if(extension == "bck")
   {
@@ -183,12 +158,7 @@ bool init()
   walkBack(10*128);
 
   for(int i = 0; i < getParameterCount(); ++i)
-  {
-    setStartupText("Loading " + getParameter(i) + "...");
     loadFile(getParameter(i));
-  }
-
-  setStartupText("Ready.");
 
   return true;
 }

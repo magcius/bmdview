@@ -29,8 +29,6 @@ void readBmd(FILE* f, BModel* dst)
 
     fseek(f, t, SEEK_SET);
 
-    setStartupText("Parsing " + std::string(tag, 4) + "...");
-
     if(strncmp(tag, "INF1", 4) == 0)
       dumpInf1(f, dst->inf1);
     else if(strncmp(tag, "VTX1", 4) == 0)

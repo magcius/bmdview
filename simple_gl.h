@@ -17,9 +17,6 @@ std::string getCommand();
 
 void flush();
 
-
-void setStartupText(const std::string& text);
-
 #ifdef _WIN32
 
 #include <windows.h>

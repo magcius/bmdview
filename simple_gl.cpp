@@ -84,26 +84,6 @@ HWND getHWnd()
   return g_hWnd;
 }
 
-void setStartupText(const std::string& text)
-{
-  if(g_isInited)
-    return; //otherwise, once the second model is loaded,
-            //the message pump in this function would
-            //call draw on a half loaded model, causing a crash
-
-  g_startupText = text;
-  InvalidateRect(getHWnd(), NULL, TRUE);
-  UpdateWindow(getHWnd());
-
-  //pump some messages
-  MSG msg;
-  while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-  {
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
-  }
-}
-
 bool isKeyPressed(int key)
 {
   return (GetAsyncKeyState(key) & 0x8000) != 0;
@@ -454,8 +434,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE old, LPSTR params, int showCom)
 
   if(g_done)
     MessageBox(hWnd, "OpenGL couldn't be set up", "ARGH!!!", MB_OK);
-
-  setStartupText("Loading...");
 
   DragAcceptFiles(hWnd, TRUE);
 
