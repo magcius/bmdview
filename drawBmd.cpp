@@ -252,15 +252,10 @@ void drawBatch(BModel& bmd, int index, const Matrix44f& def)
     return; //not visible
   }
 
-  if(currBatch.attribs.hasTexCoords[0] && !isKeyPressed('E')
-    && !isKeyPressed('1')) //vertex colors only
-  {
+  if(currBatch.attribs.hasTexCoords[0])
     glEnable(GL_TEXTURE_2D);
-  }
   else
-  {
     glDisable(GL_TEXTURE_2D);
-  }
 
   Matrix44f matrixTable[10]; //10 "normal" matrices - see gx.h
 
@@ -300,7 +295,7 @@ void drawBatch(BModel& bmd, int index, const Matrix44f& def)
       glColor3f(1, 1, 1);
       for(size_t m = 0; m < currPrimitive.points.size(); ++m)
       {
-        if(currBatch.attribs.hasMatrixIndices) // && currBatch.matrixType != 0)
+        if(currBatch.attribs.hasMatrixIndices)
         {
           mat = matrixTable[currPrimitive.points[m].matrixIndex/3];
           adjustMatrix(mat, currBatch.matrixType);
