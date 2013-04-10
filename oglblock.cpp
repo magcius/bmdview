@@ -767,9 +767,6 @@ createFragmentShaderString(int index, const Mat3& mat)
   //do alpha testing in shader, because normal opengl alpha testing
   //can't handle logical ops
   const AlphaCompare& ac = mat.alphaCompares[currMat.alphaCompIndex];
-  out << "\n  //alpha test - my stupid gfx card doesn\'t support ^^, so we have to fake it\n";
-  out << "  //ATI cards have problems with || and && if a and b are constant true.\n";
-  out << "  // - so use any() and all()...\n";
 
   out << "  bool a = ";
   out << getAlphaCompare(ac.comp0, ac.ref0);
@@ -778,28 +775,25 @@ createFragmentShaderString(int index, const Mat3& mat)
   out << getAlphaCompare(ac.comp1, ac.ref1);
   out << ";\n";
   //*
-  out << "  if(";
-  out << "!(";
+  out << "  if(!(";
   switch(ac.alphaOp)
   {
     case 0: //GX_AOP_AND
-      out << "all(bvec2(a, b))";
+      out << "a && b";
       break;
     case 1: //GX_AOP_OR
-      out << "any(bvec2(a, b))";
+      out << "a || b";
       break;
     case 2: //GX_AOP_XOR
-      out << "any(bvec2(all(bvec2(!a, b)), all(bvec2(a, !b))))";
+      out << "a != b";
       break;
     case 3: //GX_AOP_XNOR
-      out << "any(bvec2(all(bvec2(!a, !b)), all(bvec2(a, b))))";
+      out << "a == b";
       break;
   }
   
   out << "))\n";
   out << "    discard;\n";
-  //*/
-
 
   out << "}\n";
   return out.str();
