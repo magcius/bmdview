@@ -13,10 +13,6 @@
 
 using namespace std;
 
-void drawCoordFrame();
-
-void drawBatch(BModel& bmd, int index, const Matrix44f& def);
-
 Vector3f normTrans(const Matrix44f& m, const Vector3f& v)
 {
   //TODO: use inverse transpose
@@ -40,7 +36,8 @@ Matrix44f updateMatrix(const Frame& f, Matrix44f effP)
 }
 
 
-GLenum compareMode(u8 gxMode)
+static GLenum
+compareMode(u8 gxMode)
 {
   switch(gxMode)
   {
@@ -82,7 +79,8 @@ GLenum compareMode(u8 gxMode)
   }
 }
 
-GLenum blendFunc(u8 blendMode)
+static GLenum
+blendFunc(u8 blendMode)
 {
   switch(blendMode)
   {
@@ -127,41 +125,24 @@ void applyMaterial(int index, Model& m, const OglBlock& oglBlock)
   Material& mat = bmd.mat3.materials[bmd.mat3.indexToMatIndex[index]];
   string name = bmd.mat3.stringtable[index];
 
-  if(!isKeyPressed('Q'))
+  //blending
+  const BlendInfo& bi = bmd.mat3.blendInfos[mat.blendIndex];
+
+  switch(bi.blendMode)
   {
-    //blending
-    const BlendInfo& bi = bmd.mat3.blendInfos[mat.blendIndex];
-
-    if(bi.blendMode != 0 && bi.blendMode != 1 //support only none and blend for now
-      //|| bi.srcFactor >= 6 || bi.dstFactor >= 6 //don't support destination alpha for now
-      )
-    {
-      fprintf(stderr, "%s: Unsupported BlendInfo %d %d %d %d\n",
-        name.c_str(), bi.blendMode, bi.srcFactor, bi.dstFactor, bi.logicOp);
-      glDisable(GL_BLEND);
-    }
-    else
-    {
-      switch(bi.blendMode)
+    case 0: //TODO: this should mean "don't blend", but links eyes don't
+            //work without this
+    case 1: //blend
+       //TODO: check for destination alpha etc
+      if(bi.srcFactor == 1 && bi.dstFactor == 0)
+        glDisable(GL_BLEND);
+      else
       {
-        case 0: //TODO: this should mean "don't blend", but links eyes don't
-                //work without this
-        case 1: //blend
-           //TODO: check for destination alpha etc
-          if(bi.srcFactor == 1 && bi.dstFactor == 0)
-            glDisable(GL_BLEND);
-          else
-          {
-            glBlendFunc(blendFunc(bi.srcFactor), blendFunc(bi.dstFactor));
-            glEnable(GL_BLEND);
-          }
-          break;
+        glBlendFunc(blendFunc(bi.srcFactor), blendFunc(bi.dstFactor));
+        glEnable(GL_BLEND);
       }
-    }
-
+      break;
   }
-  else
-    glDisable(GL_BLEND);
 
   //cull mode
   switch(bmd.mat3.cullModes[mat.cullIndex])
@@ -195,41 +176,8 @@ void applyMaterial(int index, Model& m, const OglBlock& oglBlock)
 }
 
 static void
-drawSceneGraph(Model& m, const SceneGraph& sg,
-               const Matrix44f& p = Matrix44f::IDENTITY,
-               int matIndex = 0)
+adjustMatrix(Matrix44f& mat, u8 matrixType)
 {
-  BModel& bmd = *m.bmd;
-
-  Matrix44f effP = p;
-
-  switch(sg.type)
-  {
-    case 0x10: // joint
-      {
-        const Frame& f = bmd.jnt1.frames[sg.index];
-        bmd.jnt1.matrices[sg.index] = updateMatrix(f, effP);
-        effP = bmd.jnt1.matrices[sg.index];
-      }
-      break;
-    case 0x11: // material
-      matIndex = bmd.mat3.indexToMatIndex[sg.index];
-      break;
-    case 0x12: // batch
-      applyMaterial(matIndex, m, *m.oglBlock);
-      drawBatch(bmd, sg.index, effP);
-      break;
-  }
-
-  for(size_t i = 0; i < sg.children.size(); ++i)
-    drawSceneGraph(m, sg.children[i], effP, matIndex);
-}
-
-void adjustMatrix(Matrix44f& mat, u8 matrixType)
-{
-  if(isKeyPressed('X'))
-    return;
-
   switch(matrixType)
   {
     case 1: //billboard
@@ -240,15 +188,10 @@ void adjustMatrix(Matrix44f& mat, u8 matrixType)
       //slowww - each call computes a matrix inverse
       //TODO: why is transpose() needed?
       Matrix44f cam = getCameraMatrix().transpose();
-      /*
-      cam[3][0] = 0.f;
-      cam[3][1] = 0.f;
-      cam[3][2] = 0.f;
-      /*/
+
       cam[0][3] = 0.f;
       cam[1][3] = 0.f;
       cam[2][3] = 0.f;
-      //*/
 
       mat[0][0] = 1.f;
       mat[0][1] = 0.f;
@@ -275,8 +218,6 @@ void adjustMatrix(Matrix44f& mat, u8 matrixType)
       cam[1][3] = 0.f;
       cam[2][3] = 0.f;
 
-      //Vector3f up(cam[1][0], cam[1][1], cam[1][2]);
-      //Vector3f up(cam[0][1], cam[1][1], cam[2][1]);
       Vector3f up(0, 1, 0);
 
       Vector3f billPos(mat[3][0], mat[3][1], mat[3][2]);
@@ -286,19 +227,6 @@ void adjustMatrix(Matrix44f& mat, u8 matrixType)
       front.normalize();
       Vector3f right = -front.cross(up);
 
-      /*
-      mat[0][0] = right[0];
-      mat[0][1] = right[1];
-      mat[0][2] = right[2];
-
-      mat[1][0] = up[0];
-      mat[1][1] = up[1];
-      mat[1][2] = up[2];
-
-      mat[2][0] = front[0];
-      mat[2][1] = front[1];
-      mat[2][2] = front[2];
-      /*/
       mat[0][0] = right[0];
       mat[1][0] = right[1];
       mat[2][0] = right[2];
@@ -310,9 +238,6 @@ void adjustMatrix(Matrix44f& mat, u8 matrixType)
       mat[0][2] = front[0];
       mat[1][2] = front[1];
       mat[2][2] = front[2];
-      //*/
-
-      //mat = mat*cam;
     }break;
   }
 }
@@ -401,8 +326,38 @@ void drawBatch(BModel& bmd, int index, const Matrix44f& def)
 
 }
 
+static void
+drawSceneGraph(Model& m, const SceneGraph& sg,
+               const Matrix44f& p = Matrix44f::IDENTITY,
+               int matIndex = 0)
+{
+  BModel& bmd = *m.bmd;
+
+  Matrix44f effP = p;
+
+  switch(sg.type)
+  {
+    case 0x10: // joint
+      {
+        const Frame& f = bmd.jnt1.frames[sg.index];
+        bmd.jnt1.matrices[sg.index] = updateMatrix(f, effP);
+        effP = bmd.jnt1.matrices[sg.index];
+      }
+      break;
+    case 0x11: // material
+      matIndex = bmd.mat3.indexToMatIndex[sg.index];
+      break;
+    case 0x12: // batch
+      applyMaterial(matIndex, m, *m.oglBlock);
+      drawBatch(bmd, sg.index, effP);
+      break;
+  }
+
+  for(size_t i = 0; i < sg.children.size(); ++i)
+    drawSceneGraph(m, sg.children[i], effP, matIndex);
+}
+
 void drawBmd(Model& m, const SceneGraph& sg)
 {
   drawSceneGraph(m, sg);
-  glUseProgramObjectARB(0);
 }
