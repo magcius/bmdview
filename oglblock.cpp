@@ -163,7 +163,8 @@ writeTexGen(std::ostream& out, const TexGenInfo& texGen, int i, const Material& 
   }
 }
 
-std::string createVertexShaderString(int index, const Mat3& mat)
+static std::string
+createVertexShaderString(int index, const Mat3& mat)
 {
   const Material& currMat = mat.materials[index];
   std::ostringstream out;
@@ -177,7 +178,7 @@ std::string createVertexShaderString(int index, const Mat3& mat)
 
   out << "  //transform position (and normal (TODO: do normal right))\n";
   out << "  gl_Position = ftransform();\n";
-  out << "  vec3 normal = gl_NormalMatrix*gl_Normal;\n\n";
+  out << "  vec3 normal = gl_NormalMatrix * gl_Normal;\n";
   out << "  vec4 color;\n\n";
 
   //TODO: hack (lighting)
@@ -197,34 +198,20 @@ std::string createVertexShaderString(int index, const Mat3& mat)
           << c.a/255.f << ");\n";
     }
 
-    //test if this is a "light enable" flag: (seems so)
-    //*
-//http://kuribo64.cjb.net/?page=thread&id=532#14984
-//printf("%d %d\n", chanInfo.enable, chanInfo.litMask);
     if(chanInfo.enable != 0)
     {
       MColor amb = { 0, 0, 0, 0 };
-      //if(currMat.color2[0] != 0xffff)
-      if(currMat.color2[0] != 0xffff && currMat.color2[0] < mat.color2.size())
+
+      if(currMat.color2[0] != 0xffff)
         amb = mat.color2[currMat.color2[0]];
 
-      //out << "  color.rgb *= max(1.0, normal.z);\n";
       out << "  vec4 light = gl_ModelViewMatrix*vec4(0.0, 0.0, 1.0, 0.0);\n";
-      //out << "  color.rgb *= max(dot(light.xyz, normal), 0.0);\n";
-      //out << "  color.rgb *= max(dot(normalize(light.xyz), normal), 0.0);\n";
-      //out << "  color.rgb *= " << 1 - amb.r/255.f << "*max(0.5*dot(normalize(light.xyz), normalize(normal)), 0.0) + "
-      //    << amb.r/255.f << ";\n";
-      //out << "  color.rgb *= max(normal.z, 0.0);\n";
       out << "  color.rgb *= 0.5;\n";
-
-      //out << "  color.rgb += vec3(" << amb.r/255.f << ", " << amb.g/255.f << ", "
-      //    << amb.b/255.f << ");\n";
     }
 
   }
-  //*/
-  out << "  gl_FrontColor = color;\n\n\n";
 
+  out << "  gl_FrontColor = color;\n\n\n";
 
   //texgen
   out << "  //TexGen\n";
