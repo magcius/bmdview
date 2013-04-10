@@ -546,18 +546,13 @@ getOp(u8 op, u8 bias, u8 scale, u8 clamp, u8 regId, std::string ins[4], int type
 static std::string
 getAlphaCompare(int comp, int ref)
 {
-  //ATI cards can't even handle constant bools if we use any() and all(),
-  //so for now use complicated expressions for true and false
-  //(TODO: optimize constant bools away).
-
   std::ostringstream out;
   out.setf(std::ios::fixed, std::ios::floatfield);
   out.setf(std::ios::showpoint);
   switch(comp)
   {
     case 0: //GX_NEVER
-      //out << "false";
-      out << "gl_FragColor.a <= -10.0";
+      out << "false";
       break;
     case 1: //GX_LESS
       out << "gl_FragColor.a" << " < " << ref/255.f;
@@ -578,8 +573,7 @@ getAlphaCompare(int comp, int ref)
       out << "gl_FragColor.a" << " >= " << ref/255.f;
       break;
     case 7: //GX_ALWAYS
-      //out << "true";
-      out << "gl_FragColor.a <= 10.0";
+      out << "true";
       break;
   }
   return out.str();
