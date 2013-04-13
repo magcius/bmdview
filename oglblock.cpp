@@ -248,30 +248,6 @@ getRasColor(const TevOrderInfo& info)
 {
   //TODO:
   return "gl_Color";
-
-  switch(info.chanId)
-  {
-    case 0:
-      return "gl_Color.rgb";
-    case 1:
-      return "gl_SecondaryColor.rgb";
-    case 2:
-      return "gl_Color.a";
-    case 3:
-      return "gl_SecondaryColor.a";
-    case 4:
-      return "return gl_Color";
-    case 5:
-      return "return gl_SecondaryColor";
-    case 6:
-      return "vec4(0.0, 0.0, 0.0, 0.0);";
-    //TODO: 7, 8
-    default:
-    {
-      warn("getRasColor(): unknown chanId 0x%x", info.chanId);
-      return "vec4(0.0, 1.0, 0.0, 1.0);";
-    }
-  }
 }
 
 static std::string
@@ -384,17 +360,13 @@ getMods(const std::string& dest, u8 bias, u8 scale, u8 clamp, int type)
     { "- 0.5*ONE.rgb", "- 0.5" }
   };
 
-  if (bias < 3) {
+  if (bias == 1 || bias == 2) {
     out << "  " << dest << " = " << dest << biasStr[bias][type] << ";\n";
-  } else {
-    warn("getMods(): unknown bias %d", bias);
   }
 
   const char* scaleStr[4] = { "1.0", "2.0", "4.0", "0.5" };
-  if (scale < 4) {
+  if (scale > 0 && scale < 4) {
     out << "  " << dest << " *= " << scaleStr[scale] << ";\n";
-  } else {
-    warn("getMods(): unknown scale %d", scale);
   }
 
   if(clamp) {
@@ -637,18 +609,10 @@ createFragmentShaderString(int index, const Mat3& mat)
   }
   for(i = 1; i < 4; ++i)
   {
-    //TODO: this is still somewhat broken (startline.bmd for example)
-
     if(needReg[i])
-    //if(needReg[i==0?3:i-1])
     {
-      const Color16& c = mat.colorS10[currMat.colorS10[i==0?3:i-1]]; //XXXX ????? (sunflower.bmd)
-      //const Color16& c = mat.colorS10[currMat.colorS10[i]]; //XXXX ?????
-      //const MColor& c = mat.color3[currMat.color3[i]]; //XXXX ?????
-      if(i == 0)
-        out << "  " << getRegIdName(i);
-      else
-        out << "  vec4 " << getRegIdName(i);
+      const Color16& c = mat.colorS10[currMat.colorS10[i - 1]];
+      out << "  vec4 " << getRegIdName(i);
       out << " = vec4("
           << c.r/255.f << ", " << c.g/255.f << ", "
           << c.b/255.f << ", " << c.a/255.f << ");\n";
